@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{A0F27C46-BC4E-4611-AF1F-A2B52A3746BD}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>FastCgiNet</RootNamespace>
+    <AssemblyName>FastCgiNet</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>False</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="FastCgiApplication.cs" />
+    <Compile Include="NameValuePair.cs" />
+    <Compile Include="RecordType.cs" />
+    <Compile Include="Role.cs" />
+    <Compile Include="NameValuePairCollection.cs" />
+    <Compile Include="Record.cs" />
+    <Compile Include="FCGIBeginRequest.cs" />
+    <Compile Include="FCGIEndRequest.cs" />
+    <Compile Include="ByteStreamContent.cs" />
+    <Compile Include="ByteCopyUtils.cs" />
+    <Compile Include="ProtocolStatus.cs" />
+    <Compile Include="RecordContentsStream.cs" />
+    <Compile Include="Request.cs" />
+    <Compile Include="ILogger.cs" />
+    <Compile Include="EmptyLogger.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+</Project>

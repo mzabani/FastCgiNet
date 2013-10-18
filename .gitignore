@@ -1,0 +1,7 @@
+*.dll
+*.mdb
+*.userprefs
+/FastCgiNet/bin
+/Tests/bin
+/Tests/test-results
+/test-results

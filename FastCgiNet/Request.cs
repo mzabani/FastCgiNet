@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using FastCgiNet.Logging;
 
 namespace FastCgiNet
 {

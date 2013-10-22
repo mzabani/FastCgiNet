@@ -1,9 +1,9 @@
 using System;
 
-namespace FastCgiNet
+namespace FastCgiNet.Logging
 {
 	/// <summary>
-	/// Implement this to be able to log internal errors.
+	/// Implement this to be able to log internal errors and debug messages, among others.
 	/// </summary>
 	public interface ILogger
 	{

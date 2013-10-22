@@ -1,6 +1,6 @@
 using System;
 
-namespace FastCgiNet
+namespace FastCgiNet.Logging
 {
 	class EmptyLogger : ILogger
 	{

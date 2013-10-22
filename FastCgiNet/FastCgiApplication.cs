@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
+using FastCgiNet.Logging;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 

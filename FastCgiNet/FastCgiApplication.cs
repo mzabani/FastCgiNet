@@ -231,6 +231,19 @@ namespace FastCgiNet
 			
 		}
 
+		void AcceptConnection(IAsyncResult ar)
+		{
+			try
+			{
+				Socket newConnectionSocket = tcpListenSocket.EndAccept(ar);
+				AssociateSocketToRequest(newConnectionSocket, null);
+			}
+			catch (Exception e)
+			{
+				logger.Error(e);
+			}
+		}
+
 		void WaitForConnections()
 		{
 			int pollTime_us = 10000;
@@ -240,6 +253,7 @@ namespace FastCgiNet
 				{
 					Socket newConnectionSocket = null;
 					try {
+						//tcpListenSocket.BeginAccept(AcceptConnection, null);
 						newConnectionSocket = tcpListenSocket.Accept();
 					} catch (SocketException) {
 						//TODO: Look for the code for a "no connection pending" error at the Windows Sockets version 2 API error code documentation,

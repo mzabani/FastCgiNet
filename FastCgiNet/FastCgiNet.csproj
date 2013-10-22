@@ -47,8 +47,11 @@
     <Compile Include="ProtocolStatus.cs" />
     <Compile Include="RecordContentsStream.cs" />
     <Compile Include="Request.cs" />
-    <Compile Include="ILogger.cs" />
-    <Compile Include="EmptyLogger.cs" />
+    <Compile Include="Logging\EmptyLogger.cs" />
+    <Compile Include="Logging\ILogger.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="Logging\" />
+  </ItemGroup>
 </Project>

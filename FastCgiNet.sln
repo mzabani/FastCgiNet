@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastCgiNet", "FastCgiNet\FastCgiNet.csproj", "{A0F27C46-BC4E-4611-AF1F-A2B52A3746BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{AE2596D8-F3C2-4B07-8B1C-7F198CED5D37}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastCgiNet.Tests", "FastCgiNet.Tests\FastCgiNet.Tests.csproj", "{AE2596D8-F3C2-4B07-8B1C-7F198CED5D37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

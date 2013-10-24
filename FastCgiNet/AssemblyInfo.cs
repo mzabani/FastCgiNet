@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 // Information about this assembly is defined by the following attributes. 
 // Change them to the values specific to your project.
 
-[InternalsVisibleTo("Tests")]
+[InternalsVisibleTo("FastCgiNet.Tests")]
 
 [assembly: AssemblyTitle("FastCgiNet")]
 [assembly: AssemblyDescription("Client side FastCgi 100% managed library")]

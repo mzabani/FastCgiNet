@@ -82,29 +82,6 @@ namespace Tests
 		}
 
 		[Test]
-		public void RecordContentsStreamWriteAndRead() {
-			var s = new RecordContentsStream();
-
-			byte[] testbuf = new byte[10];
-
-			for (int i = 0; i < testbuf.Length; ++i)
-				s.Write(testbuf, i, 1);
-
-			byte[] readBytes = new byte[10];
-			for (int i = 0; i < testbuf.Length; ++i)
-			{
-				s.Read(readBytes, i, 1);
-				Assert.AreEqual(testbuf[i], readBytes[0]);
-			}
-
-			s.Read(readBytes, 0, 10);
-			for (int i = 0; i < testbuf.Length; ++i)
-				Assert.AreEqual(testbuf[i], readBytes[i]);
-
-			Assert.AreEqual(10, s.Length);
-		}
-
-		[Test]
 		public void RecordSocketSizeOfSentData() {
 			byte[] data = new byte[1024];
 			var record = new Record(RecordType.FCGIStdout, 1);
@@ -112,13 +89,49 @@ namespace Tests
 			// Just write anything
 			s.Write(data, 0, data.Length);
 
-			int totalRecordBytes = 0;
-			foreach (var arrSegment in record.GetBytes())
-			{
-				totalRecordBytes += arrSegment.Count;
-			}
+			int totalRecordBytes = record.GetBytes().Sum (d => d.Count);
 
 			Assert.AreEqual(data.Length + 8 + record.PaddingLength, totalRecordBytes);
+		}
+	
+		[Test]
+		[ExpectedException(typeof(ArgumentOutOfRangeException))]
+		public void TryToCreateRecordWithLessThanHeaderBytes()
+		{
+			byte[] data = new byte[7];
+			int endOfRecord;
+			using (var rec = new Record(data, 0, data.Length, out endOfRecord))
+			{
+			}
+		}
+
+		[Test]
+		public void ReceiveEmptyRecord()
+		{
+			using (var rec = new Record(RecordType.FCGIStdin, 1))
+			{
+				var allRecordBytes = rec.GetBytes().ToList();
+
+				// Let's hope the header comes in one piece..
+				var bytesToFeed = allRecordBytes[0];
+
+				int endOfRecord;
+
+				using (var receivedRecord = new Record(bytesToFeed.Array, bytesToFeed.Offset, bytesToFeed.Count, out endOfRecord))
+				{
+					int i = 1;
+					while (endOfRecord == -1)
+					{
+						bytesToFeed = allRecordBytes[i];
+						receivedRecord.FeedBytes(bytesToFeed.Array, bytesToFeed.Offset, bytesToFeed.Count, out endOfRecord);
+					}
+
+					Assert.AreEqual(8 + receivedRecord.PaddingLength - 1, endOfRecord);
+					Assert.AreEqual(0, receivedRecord.ContentLength);
+					Assert.AreEqual(true, receivedRecord.EmptyContentData);
+					Assert.AreEqual(true, receivedRecord.IsByteStreamRecord);
+				}
+			}
 		}
 	}
 }

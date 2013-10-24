@@ -2,6 +2,6 @@
 *.mdb
 *.userprefs
 /FastCgiNet/bin
-/Tests/bin
-/Tests/test-results
+/FastCgiNet.Tests/bin
+/FastCgiNet.Tests/test-results
 /test-results

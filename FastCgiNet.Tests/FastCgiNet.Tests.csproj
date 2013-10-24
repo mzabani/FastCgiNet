@@ -8,7 +8,7 @@
     <ProjectGuid>{AE2596D8-F3C2-4B07-8B1C-7F198CED5D37}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Tests</RootNamespace>
-    <AssemblyName>Tests</AssemblyName>
+    <AssemblyName>FastCgiNet.Tests</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -36,7 +36,8 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Test.cs" />
+    <Compile Include="RecordContentStream.cs" />
+    <Compile Include="Record.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

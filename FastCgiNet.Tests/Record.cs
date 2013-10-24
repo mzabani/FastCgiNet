@@ -110,6 +110,7 @@ namespace Tests
 		{
 			using (var rec = new Record(RecordType.FCGIStdin, 1))
 			{
+				rec.ContentStream = Stream.Null;
 				var allRecordBytes = rec.GetBytes().ToList();
 
 				// Let's hope the header comes in one piece..

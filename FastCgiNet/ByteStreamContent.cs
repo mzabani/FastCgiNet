@@ -52,8 +52,14 @@ namespace FastCgiNet
 			ContentFed = new RecordContentsStream();
 		}
 
+		/// <summary>
+		/// Disposes of any underlying streams.
+		/// </summary>
 		public void Dispose() {
-			ContentFed.Dispose();
+			if (ContentFed != null)
+				ContentFed.Dispose();
+			if (Content != null)
+				Content.Dispose();
 		}
 
 		/// <summary>

@@ -127,6 +127,7 @@ namespace FastCgiNet
 		/// this to a stream with the content in it. If you want to set this to a Stream, do prefer using <see cref="RecordContentsStream"/> 
 		/// as it is tailor made for socket operations (avoids unnecessary buffering) and checks for record size limits. Use a different type of Stream only if you really must.
 		/// </summary>
+		/// <remarks>After disposing of this Record, any streams set through this property will also be disposed of.</remarks>
 		public Stream ContentStream
 		{
 			get

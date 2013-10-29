@@ -106,7 +106,6 @@ namespace FastCgiNet
 							int availableBytes = sock.Available;
 							if (availableBytes == 0)
 							{
-								//TODO: Remote connection shutdown, Log and ignore?
 								logger.Info("Remote socket connection closed for socket {0}. Closing socket and skipping to next Socket.", sock.GetHashCode());
 								request.CloseSocket();
 								continue;
@@ -173,6 +172,7 @@ namespace FastCgiNet
 								bytesFed = lastByteOfRecord + 1;
 								
 								// Run the signed events with the complete record
+								// Catch application errors to avoid service disruption
 								try
 								{
 									switch (lastIncompleteRecord.RecordType)
@@ -195,7 +195,10 @@ namespace FastCgiNet
 								}
 								catch (Exception ex)
 								{
-									//TODO: Log and end request?
+									// Log and end request
+									logger.Error(ex, "Application error");
+									request.CloseSocket();
+									continue;
 								}
 								finally
 								{
@@ -225,11 +228,9 @@ namespace FastCgiNet
 				}
 				catch (Exception e)
 				{
-					logger.Fatal(e);
-					throw;
+					logger.Fatal(e, "Exception would end the data receiving loop. This is extremely");
 				}
 			}
-			
 		}
 
 		void AcceptConnection(IAsyncResult ar)
@@ -254,21 +255,21 @@ namespace FastCgiNet
 				{
 					Socket newConnectionSocket = null;
 					try {
-						//tcpListenSocket.BeginAccept(AcceptConnection, null);
-						newConnectionSocket = tcpListenSocket.Accept();
+						tcpListenSocket.BeginAccept(AcceptConnection, null);
+						//newConnectionSocket = tcpListenSocket.Accept();
 					} catch (SocketException) {
 						//TODO: Look for the code for a "no connection pending" error at the Windows Sockets version 2 API error code documentation,
 						// and continue only in that case..
 						continue;
 					}
 
-					AssociateSocketToRequest(newConnectionSocket, null);
+					//AssociateSocketToRequest(newConnectionSocket, null);
 				}
 			}
 		}
 
 		/// <summary>
-		/// Set this to an <see cref="ILogger"/> to log usage information.
+		/// Set this to an <see cref="FastCgiNet.Logging.ILogger"/> to log usage information.
 		/// </summary>
 		public void SetLogger(ILogger logger)
 		{

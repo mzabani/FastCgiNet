@@ -16,7 +16,13 @@ namespace FastCgiNet.Logging
 		public void Error (Exception e)
 		{
 		}
+		public void Error (Exception e, string msg, params object[] prms)
+		{
+		}
 		public void Fatal (Exception e)
+		{
+		}
+		public void Fatal (Exception e, string msg, params object[] prms)
 		{
 		}
 	}

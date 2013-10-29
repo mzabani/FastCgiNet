@@ -9,8 +9,8 @@ namespace FastCgiNet
 		public int ValueLength { get; private set; }
 
 		private int nameAndValueLengthSoFar = 0;
-		byte[] name;
-		byte[] value;
+		private byte[] name;
+		private byte[] value;
 		public string Name {
 			get
 			{
@@ -87,8 +87,23 @@ namespace FastCgiNet
 			}
 		}
 
+		/// <summary>
+		/// Creates a name value pair with name <paramref name="key"/> and value <paramref name="value"/>.
+		/// Make sure both strings can be ASCII encoded.
+		/// </summary>
+		public NameValuePair(string key, string val)
+		{
+			name = ASCIIEncoding.ASCII.GetBytes(key);
+			value = ASCIIEncoding.ASCII.GetBytes(val);
+			NameLength = name.Length;
+			ValueLength = value.Length;
+			nameAndValueLengthSoFar = NameLength + ValueLength;
+		}
+
 		internal NameValuePair (byte[] firstData, int offset, int length, out int lastByteOfNameValuePair)
 		{
+			//TODO: Make length verifications. We need a minimum amount of bytes to work with here..
+
 			// Gets the lenghts of the name and the value
 			NameLength = GetLengthFromByteArray(firstData, offset);
 			int bytesRead = 0;
@@ -116,8 +131,6 @@ namespace FastCgiNet
 			}
 			else
 				lastByteOfNameValuePair = -1;
-
-			//Console.WriteLine("Name: {0}\nValue:{1}", Name, Value);
 		}
 	}
 }

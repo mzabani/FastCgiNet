@@ -12,11 +12,11 @@ namespace FastCgiNet
 	public class Request
 	{
 		public ushort RequestId { get; private set; }
-		internal Socket socket { get; private set; }
+		internal Socket Socket { get; private set; }
 		internal Record LastIncompleteRecord;
-		ILogger logger;
+		private ILogger Logger;
 
-		ConcurrentDictionary<Socket, Request> requestsTable;
+		private ConcurrentDictionary<Socket, Request> RequestsTable;
 
 		/// <summary>
 		/// Sends a record over the wire. This method does not throw if the socket has been closed.
@@ -34,20 +34,22 @@ namespace FastCgiNet
 			{
 				foreach (var arrSegment in rec.GetBytes())
 				{
-					socket.Send(arrSegment.Array, arrSegment.Offset, arrSegment.Count, SocketFlags.None);
+					Socket.Send(arrSegment.Array, arrSegment.Offset, arrSegment.Count, SocketFlags.None);
 				}
 			}
-			catch (ObjectDisposedException e)
+			catch (ObjectDisposedException)
 			{
-				//TODO: Better logging
-				logger.Info("Could not send data through socket because it was closed");
+				//TODO: Better logging, i.e. identify Request
+				if (Logger != null)
+					Logger.Info("Could not send data through socket because it was closed");
 
 				return false;
 			}
 			catch (SocketException e)
 			{
-				//TODO: Better logging
-				logger.Info("Could not send data through socket because it was closed");
+				//TODO: Better logging, i.e. identify Request
+				if (Logger != null)
+					Logger.Info("Could not send data through socket because it was closed");
 
 				if (e.SocketErrorCode != SocketError.Shutdown)
 					throw;
@@ -69,8 +71,8 @@ namespace FastCgiNet
 
 			try
 			{
-				socket.Close();
-				socket.Dispose();
+				Socket.Close();
+				Socket.Dispose();
 				connectionClosedError = false;
 			}
 			catch (ObjectDisposedException)
@@ -78,28 +80,37 @@ namespace FastCgiNet
 			}
 			catch (SocketException e)
 			{
-				//TODO: Better logging
-				logger.Info("Could not close socket because it was already closed");
+				//TODO: Better logging, i.e. identify Request
+				if (Logger != null)
+					Logger.Info("Could not close socket because it was already closed");
 
 				if (e.SocketErrorCode != SocketError.Shutdown)
 					throw;
 			}
 
-			Request trash;
-			bool elementRemoved = requestsTable.TryRemove(socket, out trash);
-
-			if (elementRemoved == false && connectionClosedError == false)
+			if (RequestsTable != null)
 			{
-				//TODO: Better logging
-				logger.Info("Could not close socket because it was already closed");
+				Request trash;
+				bool elementRemoved = RequestsTable.TryRemove(Socket, out trash);
 
-				connectionClosedError = true;
+				if (elementRemoved == false && connectionClosedError == false)
+				{
+					//TODO: Better logging, i.e. identify Request
+					if (Logger != null)
+						Logger.Info("Could not close socket because it was already closed");
+
+					connectionClosedError = true;
+				}
 			}
 
 			return !connectionClosedError;
 		}
 
-		internal void SetBeginRequest(Record rec)
+		/// <summary>
+		/// Sets some basic properties of this request such as its <see cref="RequestId"/>.
+		/// </summary>
+		/// <param name="rec">The BeginRequest record.</param> 
+		public void SetBeginRequest(Record rec)
 		{
 			if (rec == null)
 				throw new ArgumentNullException("rec");
@@ -111,7 +122,9 @@ namespace FastCgiNet
 
 		public override int GetHashCode ()
 		{
-			return RequestId.GetHashCode() + 71 * socket.GetHashCode();
+			// A request is uniquely identified by its socket.
+			// DO NOT involve RequestId in this, because it starts with 0 and then may change.
+			return Socket.GetHashCode();
 		}
 
 		public override bool Equals (object obj)
@@ -123,22 +136,48 @@ namespace FastCgiNet
 			if (b == null)
 				return false;
 
-			return b.socket.Equals(this.socket) && b.RequestId == RequestId;
+			return b.Socket.Equals(this.Socket);
 		}
 
-		public Request (Socket s, ConcurrentDictionary<Socket, Request> requestsTable, ILogger logger)
+		public Request(Socket s)
 		{
 			if (s == null)
 				throw new ArgumentNullException("s");
-			else if (requestsTable == null)
-				throw new ArgumentNullException("requestsTable");
-			else if (logger == null)
-				throw new ArgumentNullException("logger");
 
-			socket = s;
-			this.requestsTable = requestsTable;
-			this.logger = logger;
+			this.Socket = s;
+		}
+
+		public Request (Socket s, ILogger logger)
+			: this(s)
+		{
+			if (logger == null)
+				throw new ArgumentNullException("Logger is null. Use another constructor if you don't want to set a logger");
+
+			Logger = logger;
+		}
+
+		/// <summary>
+		/// This constructor helps maintain a table of requests.
+		/// </summary>
+		internal Request (Socket s, ConcurrentDictionary<Socket, Request> requestsTable, ILogger logger)
+			: this(s, logger)
+		{
+			if (requestsTable == null)
+				throw new ArgumentNullException("requestsTable");
+			
+			this.RequestsTable = requestsTable;
+		}
+
+		/// <summary>
+		/// This constructor helps maintain a table of requests.
+		/// </summary>
+		internal Request (Socket s, ConcurrentDictionary<Socket, Request> requestsTable)
+			: this(s)
+		{
+			if (requestsTable == null)
+				throw new ArgumentNullException("requestsTable");
+
+			this.RequestsTable = requestsTable;
 		}
 	}
 }
-

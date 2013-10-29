@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using FastCgiNet.Logging;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FastCgiNet
@@ -17,10 +18,19 @@ namespace FastCgiNet
 	/// </summary>
 	public class FastCgiApplication : IDisposable
 	{
-		const int listenBacklog = 500;
-		bool waitForConnections;
-		Socket tcpListenSocket;
-		ILogger logger;
+		private const int listenBacklog = 500;
+		private Socket tcpListenSocket;
+		private Socket unixListenSocket;
+		private bool SomeListenSocketHasBeenBound
+		{
+			get
+			{
+				return tcpListenSocket.IsBound || unixListenSocket.IsBound;
+			}
+		}
+		private ILogger logger;
+
+		public bool IsRunning { get; private set; }
 
 		/// <summary>
 		/// Requests indexed by their sockets.
@@ -63,14 +73,16 @@ namespace FastCgiNet
 					List<Socket> connectedSockets = openSockets.Keys.ToList();
 					if (connectedSockets.Count > 0)
 					{
-						logger.Debug("+ Connected Sockets: {0}", connectedSockets.Count);
+						if (logger != null)
+							logger.Debug("+ Connected Sockets: {0}", connectedSockets.Count);
 
 						Socket.Select (connectedSockets, null, null, selectMaximumTime);
 			
 						foreach (Socket sock in connectedSockets)
 						{
 							int minimumNeeded;
-							logger.Info("Received connection: Socket {0}", sock.GetHashCode());
+							if (logger != null)
+								logger.Info("Received connection: Socket {0}", sock.GetHashCode());
 			
 							// If there is no last incomplete record for this socket, then we need at least 8 bytes for 
 							// the header of a first record. Otherwise, we need anything we can get
@@ -84,7 +96,11 @@ namespace FastCgiNet
 									lastIncompleteRecord = request.LastIncompleteRecord;
 								else
 								{
-									request = new Request(sock, openSockets, logger);
+									if (logger != null)
+										request = new Request(sock, openSockets, logger);
+									else
+										request = new Request(sock, openSockets);
+
 									AssociateSocketToRequest(sock, request);
 								}
 
@@ -95,7 +111,11 @@ namespace FastCgiNet
 							}
 							else
 							{
-								request = new Request(sock, openSockets, logger);
+								if (logger != null)
+									request = new Request(sock, openSockets, logger);
+								else
+									request = new Request(sock, openSockets);
+
 								AssociateSocketToRequest(sock, request);
 								minimumNeeded = 8;
 							}
@@ -106,13 +126,17 @@ namespace FastCgiNet
 							int availableBytes = sock.Available;
 							if (availableBytes == 0)
 							{
-								logger.Info("Remote socket connection closed for socket {0}. Closing socket and skipping to next Socket.", sock.GetHashCode());
+								if (logger != null)
+									logger.Info("Remote socket connection closed for socket {0}. Closing socket and skipping to next Socket.", sock.GetHashCode());
+
 								request.CloseSocket();
 								continue;
 							}
 							else if (availableBytes < minimumNeeded)
 							{
-								logger.Debug("Needed {0} bytes but only got {1}. Skipping to next Socket.", minimumNeeded, availableBytes);
+								if (logger != null)
+									logger.Debug("Needed {0} bytes but only got {1}. Skipping to next Socket.", minimumNeeded, availableBytes);
+
 								continue;
 							}
 
@@ -132,11 +156,15 @@ namespace FastCgiNet
 									// Skip to next socket by breaking out of the loop
 									if (bytesRead - bytesFed < 8)
 									{
-										logger.Debug("Not enough bytes ({0}) to create a new record. Skipping to next Socket.", bytesRead - bytesFed);
+										if (logger != null)
+											logger.Debug("Not enough bytes ({0}) to create a new record. Skipping to next Socket.", bytesRead - bytesFed);
+
 										break;
 									}
 
-									logger.Debug("Creating new record with {0} bytes still to be fed.", bytesRead - bytesFed);
+									if (logger != null)
+										logger.Debug("Creating new record with {0} bytes still to be fed.", bytesRead - bytesFed);
+
 									lastIncompleteRecord = new Record (buffer, bytesFed, bytesRead - bytesFed, out lastByteOfRecord);
 									
 									if (lastIncompleteRecord.RecordType == RecordType.FCGIBeginRequest)
@@ -147,14 +175,18 @@ namespace FastCgiNet
 			
 									if (lastByteOfRecord == -1)
 									{
-										logger.Debug("Record is still incomplete. Saving it as last incomplete record for socket {0}. Skipping to next Socket.", sock.GetHashCode());
+										if (logger != null)
+											logger.Debug("Record is still incomplete. Saving it as last incomplete record for socket {0}. Skipping to next Socket.", sock.GetHashCode());
+
 										request.LastIncompleteRecord = lastIncompleteRecord;
 										break;
 									}
 								}
 								else
 								{
-									logger.Debug("Feeding bytes into last incomplete record for socket {0}", sock.GetHashCode());
+									if (logger != null)
+										logger.Debug("Feeding bytes into last incomplete record for socket {0}", sock.GetHashCode());
+
 									lastIncompleteRecord.FeedBytes (buffer, bytesFed, bytesRead - bytesFed, out lastByteOfRecord);
 								}
 								
@@ -163,11 +195,14 @@ namespace FastCgiNet
 								if (lastByteOfRecord == -1)
 								{
 									request.LastIncompleteRecord = lastIncompleteRecord;
-									logger.Debug("Record is still incomplete. Saving it as last incomplete record for socket {0}. Skipping to next Socket.", sock.GetHashCode());
+									if (logger != null)
+										logger.Debug("Record is still incomplete. Saving it as last incomplete record for socket {0}. Skipping to next Socket.", sock.GetHashCode());
+
 									break;
 								}
 
-								logger.Debug("Record for socket {0} is complete.", sock.GetHashCode());
+								if (logger != null)
+									logger.Debug("Record for socket {0} is complete.", sock.GetHashCode());
 
 								bytesFed = lastByteOfRecord + 1;
 								
@@ -196,7 +231,9 @@ namespace FastCgiNet
 								catch (Exception ex)
 								{
 									// Log and end request
-									logger.Error(ex, "Application error");
+									if (logger != null)
+										logger.Error(ex, "Application error");
+
 									request.CloseSocket();
 									continue;
 								}
@@ -204,7 +241,8 @@ namespace FastCgiNet
 								{
 									lastIncompleteRecord = null;
 									request.LastIncompleteRecord = null;
-									logger.Debug("Setting last incomplete record for socket {0} to null.", sock.GetHashCode());
+									if (logger != null)
+										logger.Debug("Setting last incomplete record for socket {0} to null.", sock.GetHashCode());
 								}
 							}
 						}
@@ -217,18 +255,21 @@ namespace FastCgiNet
 				}
 				catch (ObjectDisposedException e)
 				{
-					logger.Info("Some operation was attempted on a closed socket. Exception: {0}", e);
+					if (logger != null)
+						logger.Info("Some operation was attempted on a closed socket. Exception: {0}", e);
 				}
 				catch (SocketException e)
 				{
 					if (e.SocketErrorCode != SocketError.Shutdown)
 						throw;
-					
-					logger.Info("Some operation was attempted on a closed socket. Exception: {0}", e);
+
+					if (logger != null)
+						logger.Info("Some operation was attempted on a closed socket. Exception: {0}", e);
 				}
 				catch (Exception e)
 				{
-					logger.Fatal(e, "Exception would end the data receiving loop. This is extremely");
+					if (logger != null)
+						logger.Fatal(e, "Exception would end the data receiving loop. This is extremely bad. Please file a bug report.");
 				}
 			}
 		}
@@ -242,28 +283,38 @@ namespace FastCgiNet
 			}
 			catch (Exception e)
 			{
-				logger.Error(e);
+				if (logger != null)
+					logger.Error(e);
 			}
 		}
 
 		void WaitForConnections()
 		{
 			int pollTime_us = 10000;
-			while (waitForConnections)
+			while (IsRunning)
 			{
-				if (tcpListenSocket.Poll(pollTime_us, SelectMode.SelectRead))
+				// This is very ugly code.. lots of room for improvement
+
+				if (tcpListenSocket.LocalEndPoint != null && tcpListenSocket.Poll(pollTime_us / 2, SelectMode.SelectRead))
 				{
-					Socket newConnectionSocket = null;
 					try {
 						tcpListenSocket.BeginAccept(AcceptConnection, null);
-						//newConnectionSocket = tcpListenSocket.Accept();
 					} catch (SocketException) {
 						//TODO: Look for the code for a "no connection pending" error at the Windows Sockets version 2 API error code documentation,
 						// and continue only in that case..
 						continue;
 					}
+				}
 
-					//AssociateSocketToRequest(newConnectionSocket, null);
+				if (unixListenSocket.LocalEndPoint != null && unixListenSocket.Poll(pollTime_us / 2, SelectMode.SelectRead))
+				{
+					//TODO: What is the handshake when accepting unix sockets? Maybe it is worth it doing this synchronously
+					try {
+						unixListenSocket.BeginAccept(AcceptConnection, null);
+					} catch (SocketException) {
+						//TODO: Look for possible error codes that we can ignore
+						continue;
+					}
 				}
 			}
 		}
@@ -280,42 +331,112 @@ namespace FastCgiNet
 		}
 
 		/// <summary>
-		/// Defines on what address and what port the TCP listen socket will listen on.
+		/// Defines on what address and what port the TCP socket will listen on.
 		/// </summary>
 		public void Bind(IPAddress addr, int port)
 		{
 			tcpListenSocket.Bind(new IPEndPoint(addr, port));
 		}
 
+#if __MonoCS__
+		/// <summary>
+		/// Defines the unix socket path to listen on.
+		/// </summary>
+		public void Bind(string socketPath)
+		{
+			var endpoint = new Mono.Unix.UnixEndPoint(socketPath);
+			unixListenSocket.Bind (endpoint);
+		}
+#endif
+
 		/// <summary>
 		/// Start this FastCgi application. This method blocks while the program runs.
 		/// </summary>
 		public void Start() {
-			tcpListenSocket.Listen(listenBacklog);
+			if (!SomeListenSocketHasBeenBound)
+				throw new InvalidOperationException("You have to bind to some address or unix socket file first");
+
+			if (tcpListenSocket.IsBound)
+				tcpListenSocket.Listen(listenBacklog);
+			if (unixListenSocket.IsBound)
+				unixListenSocket.Listen(listenBacklog);
 
 			// Wait for connections without blocking
 			Task.Factory.StartNew(WaitForConnections);
+
+			IsRunning = true;
 
 			// Block here
 			ReceiveConnectionData();
 		}
 
-		public void Dispose()
+		/// <summary>
+		/// Start this FastCgi application. This method does not block and only returns when the server is ready to accept connections.
+		/// </summary>
+		public void StartInBackground() {
+			if (!SomeListenSocketHasBeenBound)
+				throw new InvalidOperationException("You have to bind to some address or unix socket file first");
+
+			if (tcpListenSocket.IsBound)
+				tcpListenSocket.Listen(listenBacklog);
+			if (unixListenSocket.IsBound)
+				unixListenSocket.Listen(listenBacklog);
+
+			// Set this before waiting for connections
+			IsRunning = true;
+
+			//TODO: If one of the tasks below is delayed (why in the world would that happen, idk) then this
+			// method returns without being ready to accept connections..
+			Task.Factory.StartNew(ReceiveConnectionData);
+			Task.Factory.StartNew(WaitForConnections);
+		}
+
+		/// <summary>
+		/// Closes the listen socket and all active connections abruptely.
+		/// </summary>
+		public void Stop()
 		{
-			tcpListenSocket.Close();
+			IsRunning = false;
+
+			if (tcpListenSocket != null && tcpListenSocket.IsBound)
+				tcpListenSocket.Close();
+			if (unixListenSocket != null && unixListenSocket.IsBound)
+				unixListenSocket.Close();
+
+			//TODO: Stop task that waits for connection data..
+
 			foreach (var socketAndRequest in openSockets)
 			{
 				socketAndRequest.Key.Close();
 			}
 		}
 
+		/// <summary>
+		/// Stops the server if it hasn't been stopped and disposes of resources, including a logger if one has been set.
+		/// </summary>
+		public void Dispose()
+		{
+			Stop();
+
+			if (tcpListenSocket != null)
+				tcpListenSocket.Dispose();
+			if (unixListenSocket != null)
+				unixListenSocket.Dispose();
+
+			if (logger != null)
+			{
+				var disposableLogger = logger as IDisposable;
+				if (disposableLogger != null)
+					disposableLogger.Dispose();
+			}
+		}
+
 		public FastCgiApplication ()
 		{
 			tcpListenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			//TODO: ipv6 and unix sockets
-			waitForConnections = true;
-
-			logger = new EmptyLogger();
+			unixListenSocket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP); // man unix (7) says most unix implementations are safe on deliveryand order
+			//TODO: ipv6
+			IsRunning = false;
 		}
 	}
 }

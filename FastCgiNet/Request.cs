@@ -13,7 +13,7 @@ namespace FastCgiNet
 	{
 		public ushort RequestId { get; private set; }
 		internal Socket Socket { get; private set; }
-		internal Record LastIncompleteRecord;
+		internal RecordBase LastIncompleteRecord;
 		private ILogger Logger;
 
 		private ConcurrentDictionary<Socket, Request> RequestsTable;
@@ -23,7 +23,7 @@ namespace FastCgiNet
 		/// </summary>
 		/// <returns>True if the record was sent successfuly, false if the socket was closed or in the process of being closed.</returns>
 		/// <remarks>If the connection was open but the record couldn't be sent for some reason, an exception is thrown. The caller should check for all possibilities because remote connection ending is not uncommon at all.</remarks>
-		public bool Send(Record rec)
+		public bool Send(RecordBase rec)
 		{
 			if (rec == null)
 				throw new ArgumentNullException("rec");
@@ -107,24 +107,22 @@ namespace FastCgiNet
 		}
 
 		/// <summary>
-		/// Sets some basic properties of this request such as its <see cref="RequestId"/>.
+		/// Sets some basic properties of this request such as its <see cref="RequestId"/>. After this, this object's identity
+		/// will be preserved until this object's disposal.
 		/// </summary>
 		/// <param name="rec">The BeginRequest record.</param> 
-		public void SetBeginRequest(Record rec)
+		internal void SetBeginRequest(BeginRequestRecord rec)
 		{
 			if (rec == null)
 				throw new ArgumentNullException("rec");
-			else if (rec.RecordType != RecordType.FCGIBeginRequest)
-				throw new ArgumentException("The record has to be of type BeginRequest");
 
 			RequestId = rec.RequestId;
 		}
 
 		public override int GetHashCode ()
 		{
-			// A request is uniquely identified by its socket.
-			// DO NOT involve RequestId in this, because it starts with 0 and then may change.
-			return Socket.GetHashCode();
+			// A request is uniquely identified by its socket and its requestid.
+			return Socket.GetHashCode() + 71 * RequestId;
 		}
 
 		public override bool Equals (object obj)
@@ -136,19 +134,22 @@ namespace FastCgiNet
 			if (b == null)
 				return false;
 
-			return b.Socket.Equals(this.Socket);
+			return b.Socket.Equals(this.Socket) && b.RequestId.Equals(this.RequestId);;
 		}
 
-		public Request(Socket s)
+		#region Constructors
+		public Request(Socket s, BeginRequestRecord beginRequestRecord)
 		{
 			if (s == null)
 				throw new ArgumentNullException("s");
 
+			SetBeginRequest(beginRequestRecord);
+
 			this.Socket = s;
 		}
 
-		public Request (Socket s, ILogger logger)
-			: this(s)
+		public Request (Socket s, BeginRequestRecord beginRequest, ILogger logger)
+			: this(s, beginRequest)
 		{
 			if (logger == null)
 				throw new ArgumentNullException("Logger is null. Use another constructor if you don't want to set a logger");
@@ -156,9 +157,29 @@ namespace FastCgiNet
 			Logger = logger;
 		}
 
+		private Request(Socket s)
+		{
+			if (s == null)
+				throw new ArgumentNullException("s");
+
+			this.Socket = s;
+		}
+
+		private Request(Socket s, ILogger logger)
+			: this(s)
+		{
+			if (logger == null)
+				throw new ArgumentNullException("Logger is null. Use another constructor if you don't want to set a logger");
+			
+			this.Logger = logger;
+		}
+
 		/// <summary>
 		/// This constructor helps maintain a table of requests.
 		/// </summary>
+		/// <remarks>This object WILL change its identity once a BeginRequest record has been associated to it. This means
+		/// <see cref="GetHashCode()"/> and <see cref="Equals(object b)"/> WILL behave differently after a call to 
+	    /// <see cref="SetBeginRequest(Record rec)"/>. This is not exposed in the public API.</remarks>
 		internal Request (Socket s, ConcurrentDictionary<Socket, Request> requestsTable, ILogger logger)
 			: this(s, logger)
 		{
@@ -171,6 +192,9 @@ namespace FastCgiNet
 		/// <summary>
 		/// This constructor helps maintain a table of requests.
 		/// </summary>
+		/// <remarks>This object WILL change its identity once a BeginRequest record has been associated to it. This means
+		/// <see cref="GetHashCode()"/> and <see cref="Equals(object b)"/> WILL behave differently after a call to 
+		/// <see cref="SetBeginRequest(Record rec)"/>. This is not exposed in the public API.</remarks>
 		internal Request (Socket s, ConcurrentDictionary<Socket, Request> requestsTable)
 			: this(s)
 		{
@@ -179,5 +203,6 @@ namespace FastCgiNet
 
 			this.RequestsTable = requestsTable;
 		}
+		#endregion
 	}
 }

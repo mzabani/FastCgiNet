@@ -2,13 +2,36 @@ using System;
 using FastCgiNet;
 using NUnit.Framework;
 
-namespace Tests
+namespace FastCgiNet.Tests
 {
 	[TestFixture]
 	public class RecordContentStream
 	{
 		[Test]
-		public void WriteAndRead() {
+		public void WriteSeekAndReadPositionLength() {
+			var s = new RecordContentsStream();
+			
+			byte[] testbuf = new byte[10];
+			testbuf[0] = (byte)1;
+			testbuf[5] = (byte)7;
+			
+			for (int i = 0; i < testbuf.Length; ++i)
+				s.Write(testbuf, i, 1);
+
+			s.Seek(0, System.IO.SeekOrigin.Begin);
+			Assert.AreEqual(testbuf.Length, s.Length);
+			Assert.AreEqual(0, s.Position);
+
+			s.Position = 5;
+			s.Read(testbuf, 0, 1);
+			Assert.AreEqual(6, s.Position);
+			Assert.AreEqual(testbuf.Length, s.Length);
+			Assert.AreEqual(testbuf[0], testbuf[5]);
+			Assert.AreEqual(testbuf[0], (byte)7);
+		}
+
+		[Test]
+		public void WritePositionLength() {
 			var s = new RecordContentsStream();
 			
 			byte[] testbuf = new byte[10];
@@ -16,18 +39,23 @@ namespace Tests
 			for (int i = 0; i < testbuf.Length; ++i)
 				s.Write(testbuf, i, 1);
 			
-			byte[] readBytes = new byte[10];
-			for (int i = 0; i < testbuf.Length; ++i)
-			{
-				s.Read(readBytes, i, 1);
-				Assert.AreEqual(testbuf[i], readBytes[0]);
-			}
+			Assert.AreEqual(testbuf.Length, s.Length);
+			Assert.AreEqual(testbuf.Length, s.Position);
+		}
+
+		[Test]
+		public void OnlyWriteAtEndOfStream()
+		{
+			var s = new RecordContentsStream();
 			
-			s.Read(readBytes, 0, 10);
-			for (int i = 0; i < testbuf.Length; ++i)
-				Assert.AreEqual(testbuf[i], readBytes[i]);
+			byte[] testbuf = new byte[10];
 			
-			Assert.AreEqual(10, s.Length);
+			s.Write(testbuf, 0, testbuf.Length);
+			s.Position = 0;
+
+			Assert.Throws<NotImplementedException>(() => {
+				s.Write(testbuf, 0, 1);
+			});
 		}
 
 		[Test]

@@ -4,7 +4,7 @@ using System.IO;
 using NUnit.Framework;
 using FastCgiNet;
 
-namespace Tests
+namespace FastCgiNet.Tests
 {
 	[TestFixture]
 	public class Test
@@ -48,7 +48,10 @@ namespace Tests
 			GetNVP11(data, offset);
 
 			int lastByteIdx;
-			var nvp = new NameValuePair(data, offset, 100, out lastByteIdx);
+			NameValuePair nvp;
+			bool createdNvp = NVPFactory.TryCreateNVP(data, offset, 100 - offset, out nvp, out lastByteIdx);
+
+			Assert.AreEqual(true, createdNvp);
 
 			Assert.AreEqual(offset + 10, lastByteIdx);
 			Assert.AreEqual("name", nvp.Name);
@@ -56,51 +59,37 @@ namespace Tests
 		}
 
 		[Test]
-		public void TestNVPCollection() {
-			int contentLength = 11 * 2;
-			int paddingLength = 4;
-			int offset = 0;
-			byte[] data = new byte[100];
+		public void ParamsRecord() {
 
-			// Two consecutive nvps
-			GetNVP11(data, offset);
-			GetNVP11(data, offset + 11);
-
-			int lastByteOfRecord;
-			var nvpCollection = new NameValuePairCollection(contentLength, paddingLength);
-			nvpCollection.FeedBytes(data, offset, contentLength + paddingLength, out lastByteOfRecord);
-
-			Assert.AreEqual(offset + contentLength + paddingLength - 1, lastByteOfRecord);
-
-			var nvp1 = nvpCollection.Content.First();
-			var nvp2 = nvpCollection.Content.ElementAt(1);
-
-			Assert.AreEqual("name", nvp1.Name);
-			Assert.AreEqual("name", nvp2.Name);
-			Assert.AreEqual("value", nvp1.Value);
-			Assert.AreEqual("value", nvp2.Value);
 		}
 
 		[Test]
 		public void RecordSocketSizeOfSentData() {
 			byte[] data = new byte[1024];
-			var record = new Record(RecordType.FCGIStdout, 1);
-			Stream s = record.ContentStream;
-			// Just write anything
-			s.Write(data, 0, data.Length);
+			using (var record = new StdoutRecord(1))
+			{
+				Stream s = record.Contents;
+				// Just write anything
+				s.Write(data, 0, data.Length);
 
-			int totalRecordBytes = record.GetBytes().Sum (d => d.Count);
+				int totalRecordBytes = record.GetBytes().Sum (d => d.Count);
 
-			Assert.AreEqual(data.Length + 8 + record.PaddingLength, totalRecordBytes);
+				Assert.AreEqual(data.Length + 8 + record.PaddingLength, totalRecordBytes);
+			}
 		}
 	
 		[Test]
-		[ExpectedException(typeof(ArgumentOutOfRangeException))]
 		public void TryToCreateRecordWithLessThanHeaderBytes()
 		{
 			byte[] data = new byte[7];
 			int endOfRecord;
-			using (var rec = new Record(data, 0, data.Length, out endOfRecord))
+			try
+			{
+				using (var rec = new StdoutRecord(data, 0, data.Length, out endOfRecord))
+				{
+				}
+			}
+			catch (ArgumentException)
 			{
 			}
 		}
@@ -108,23 +97,24 @@ namespace Tests
 		[Test]
 		public void ReceiveEmptyRecord()
 		{
-			using (var rec = new Record(RecordType.FCGIStdin, 1))
+			using (var rec = new StdinRecord(1))
 			{
-				rec.ContentStream = Stream.Null;
 				var allRecordBytes = rec.GetBytes().ToList();
 
-				// Let's hope the header comes in one piece..
-				var bytesToFeed = allRecordBytes[0];
+				// Header first
+				var recordHeader = allRecordBytes[0];
 
 				int endOfRecord;
 
-				using (var receivedRecord = new Record(bytesToFeed.Array, bytesToFeed.Offset, bytesToFeed.Count, out endOfRecord))
+				var factory = new RecordFactory();
+
+				using (var receivedRecord = (StdinRecord)factory.CreateRecordFromHeader(recordHeader.Array, recordHeader.Offset, recordHeader.Count, out endOfRecord))
 				{
 					int i = 1;
 					while (endOfRecord == -1)
 					{
-						bytesToFeed = allRecordBytes[i];
-						receivedRecord.FeedBytes(bytesToFeed.Array, bytesToFeed.Offset, bytesToFeed.Count, out endOfRecord);
+						recordHeader = allRecordBytes[i];
+						receivedRecord.FeedBytes(recordHeader.Array, recordHeader.Offset, recordHeader.Count, out endOfRecord);
 					}
 
 					Assert.AreEqual(8 + receivedRecord.PaddingLength - 1, endOfRecord);

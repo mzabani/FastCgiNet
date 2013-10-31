@@ -35,23 +35,33 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="FastCgiApplication.cs" />
     <Compile Include="NameValuePair.cs" />
     <Compile Include="RecordType.cs" />
     <Compile Include="Role.cs" />
-    <Compile Include="NameValuePairCollection.cs" />
-    <Compile Include="Record.cs" />
-    <Compile Include="FCGIBeginRequest.cs" />
-    <Compile Include="FCGIEndRequest.cs" />
-    <Compile Include="ByteStreamContent.cs" />
     <Compile Include="ByteCopyUtils.cs" />
     <Compile Include="ProtocolStatus.cs" />
     <Compile Include="RecordContentsStream.cs" />
     <Compile Include="Request.cs" />
     <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="FastCgiHostApplication.cs" />
+    <Compile Include="FastCgiWebServer.cs" />
+    <Compile Include="Records\StdinRecord.cs" />
+    <Compile Include="Records\RecordBase.cs" />
+    <Compile Include="Records\StdoutRecord.cs" />
+    <Compile Include="Records\StderrRecord.cs" />
+    <Compile Include="Records\BeginRequestRecord.cs" />
+    <Compile Include="Records\ParamsRecord.cs" />
+    <Compile Include="RecordFactory.cs" />
+    <Compile Include="Records\EndRequestRecord.cs" />
+    <Compile Include="Records\StreamRecord.cs" />
+    <Compile Include="NameValuePairEnumerator.cs" />
+    <Compile Include="NVPFactory.cs" />
+    <Compile Include="Exceptions\InsufficientBytesException.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Logging\" />
+    <Folder Include="Records\" />
+    <Folder Include="Exceptions\" />
   </ItemGroup>
 </Project>

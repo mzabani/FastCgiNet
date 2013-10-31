@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Collections.Generic;
 
 namespace FastCgiNet
 {
@@ -7,6 +8,34 @@ namespace FastCgiNet
 	{
 		public int NameLength { get; private set; }
 		public int ValueLength { get; private set; }
+
+		/// <summary>
+		/// The number of bytes needed to represent this nvp's name.
+		/// </summary>
+		internal int BytesForName
+		{
+			get
+			{
+				if (NameLength < 128)
+					return 1;
+				else
+					return 4;
+			}
+		}
+
+		/// <summary>
+		/// The number of bytes needed to represent this nvp's value.
+		/// </summary>
+		internal int BytesForValue
+		{
+			get
+			{
+				if (ValueLength < 128)
+					return 1;
+				else
+					return 4;
+			}
+		}
 
 		private int nameAndValueLengthSoFar = 0;
 		private byte[] name;
@@ -32,6 +61,12 @@ namespace FastCgiNet
 				
 				return x.ToString();
 			}
+		}
+
+		internal IEnumerable<byte[]> GetBytes()
+		{
+			yield return name;
+			yield return value;
 		}
 
 		internal void FeedBytes (byte[] nameOrValueData, int offset, int length, out int lastByteOfNameValuePair) {
@@ -73,20 +108,6 @@ namespace FastCgiNet
 				lastByteOfNameValuePair = offset + length - 1;
 		}
 
-		private int GetLengthFromByteArray (byte[] arr, int offset)
-		{
-			if ((arr[offset] >> 7) == 0)
-			{
-				// 1 byte long
-				return arr[offset];
-			}
-			else
-			{
-				// 4 bytes long
-				return ((arr[offset] & 0x7f) << 24) + (arr[offset + 1] << 16) + (arr[offset + 2] << 8) + arr[offset + 3];
-			}
-		}
-
 		/// <summary>
 		/// Creates a name value pair with name <paramref name="key"/> and value <paramref name="value"/>.
 		/// Make sure both strings can be ASCII encoded.
@@ -100,37 +121,12 @@ namespace FastCgiNet
 			nameAndValueLengthSoFar = NameLength + ValueLength;
 		}
 
-		internal NameValuePair (byte[] firstData, int offset, int length, out int lastByteOfNameValuePair)
+		internal NameValuePair(int nameLength, int valueLength)
 		{
-			//TODO: Make length verifications. We need a minimum amount of bytes to work with here..
-
-			// Gets the lenghts of the name and the value
-			NameLength = GetLengthFromByteArray(firstData, offset);
-			int bytesRead = 0;
-
-			if (NameLength > 0x7f)
-			{
-				bytesRead += 4;
-				ValueLength = GetLengthFromByteArray(firstData, offset + 4);
-			}
-			else
-			{
-				bytesRead += 1;
-				ValueLength = GetLengthFromByteArray(firstData, offset + 1);
-			}
-			bytesRead += (ValueLength > 0x7f) ? 4 : 1;
-
-			// Alloc with the right sizes
-			name = new byte[NameLength];
-			value = new byte[ValueLength];
-
-			// In case we got more than just the lengths, start defining the name and value
-			if (length > bytesRead)
-			{
-				FeedBytes(firstData, offset + bytesRead, length - bytesRead, out lastByteOfNameValuePair);
-			}
-			else
-				lastByteOfNameValuePair = -1;
+			NameLength = nameLength;
+			ValueLength = valueLength;
+			name = new byte[nameLength];
+			value = new byte[valueLength];
 		}
 	}
 }

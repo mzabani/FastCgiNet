@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 // Change them to the values specific to your project.
 
 [InternalsVisibleTo("FastCgiNet.Tests")]
+[InternalsVisibleTo("SampleWebsite")]
 
 [assembly: AssemblyTitle("FastCgiNet")]
 [assembly: AssemblyDescription("Client side FastCgi 100% managed library")]

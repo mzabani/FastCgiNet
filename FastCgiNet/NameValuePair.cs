@@ -9,38 +9,11 @@ namespace FastCgiNet
 		public int NameLength { get; private set; }
 		public int ValueLength { get; private set; }
 
-		/// <summary>
-		/// The number of bytes needed to represent this nvp's name.
-		/// </summary>
-		internal int BytesForName
-		{
-			get
-			{
-				if (NameLength < 128)
-					return 1;
-				else
-					return 4;
-			}
-		}
-
-		/// <summary>
-		/// The number of bytes needed to represent this nvp's value.
-		/// </summary>
-		internal int BytesForValue
-		{
-			get
-			{
-				if (ValueLength < 128)
-					return 1;
-				else
-					return 4;
-			}
-		}
-
 		private int nameAndValueLengthSoFar = 0;
 		private byte[] name;
 		private byte[] value;
-		public string Name {
+		public string Name
+		{
 			get
 			{
 				var x = new StringBuilder(NameLength);
@@ -50,7 +23,8 @@ namespace FastCgiNet
 				return x.ToString();
 			}
 		}
-		public string Value {
+		public string Value
+		{
 			get
 			{
 				var x = new StringBuilder(ValueLength);
@@ -63,10 +37,38 @@ namespace FastCgiNet
 			}
 		}
 
-		internal IEnumerable<byte[]> GetBytes()
+		private byte[] GetHeaderBytes(int length)
 		{
-			yield return name;
-			yield return value;
+			byte[] headerBytes;
+
+			if (length < 128)
+			{
+				headerBytes = new byte[1] { (byte)length };
+			}
+			else
+			{
+				// MSB first
+
+				headerBytes = new byte[4];
+				headerBytes[3] = (byte) (length & 0xff000000);
+				headerBytes[2] = (byte) (length & 0xff0000);
+				headerBytes[1] = (byte) (length & 0xff00);
+				headerBytes[0] = (byte) (length & 0xff);
+				//headerBytes[0] |= (1<<7);
+			}
+
+			return headerBytes;
+		}
+
+		internal IEnumerable<ArraySegment<byte>> GetBytes()
+		{
+			// We have to build the header bytes, i.e. the name and value lengths 
+			yield return new ArraySegment<byte>(GetHeaderBytes(NameLength));
+			yield return new ArraySegment<byte>(GetHeaderBytes(ValueLength));
+
+			// Just return the name and value now, simple!
+			yield return new ArraySegment<byte>(name);
+			yield return new ArraySegment<byte>(value);
 		}
 
 		internal void FeedBytes (byte[] nameOrValueData, int offset, int length, out int lastByteOfNameValuePair) {

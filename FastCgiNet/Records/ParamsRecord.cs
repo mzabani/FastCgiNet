@@ -10,6 +10,7 @@ namespace FastCgiNet
 		/// <summary>
 		/// Enumerates the parameters in this record.
 		/// </summary>
+		/// <remarks>This will rewind <see cref="Contents"/> before enumerating, and rewind it after all elements have been enumerated as well.</remarks>
 		public IEnumerable<NameValuePair> Parameters
 		{
 			get
@@ -22,6 +23,8 @@ namespace FastCgiNet
 						while (paramsEnumerator.MoveNext())
 							yield return ((IEnumerator<NameValuePair>)paramsEnumerator).Current;
 					}
+
+					Contents.Seek(0, SeekOrigin.Begin);
 				}
 				else
 					yield break;
@@ -31,7 +34,7 @@ namespace FastCgiNet
 		public void Add(NameValuePair nvp)
 		{
 			foreach (var seg in nvp.GetBytes())
-				Contents.Write(seg, 0, seg.Length);
+				Contents.Write(seg.Array, seg.Offset, seg.Count);
 		}
 
 		/// <summary>
@@ -65,7 +68,7 @@ namespace FastCgiNet
 			return queryString.Replace(" ", "%20");
 		}
 		
-		private static string[] ValidMethods = new string[] { "GET", "POST", "PUT", "DELETE", "HEAD" };
+		private static string[] ValidMethods = new string[] { "GET", "POST", "PUT", "DELETE", "HEAD" }; //TODO: Other Http 1.1 methods
 		/// <summary>
 		/// Adds the FastCgi parameters that would be created for an HTTP 1.1 request with method <paramref name="method"/> at
 		/// Url <paramref name="u"/>.
@@ -80,9 +83,10 @@ namespace FastCgiNet
 				throw new ArgumentNullException("method");
 			else if (ValidMethods.Contains(method) == false)
 				throw new ArgumentException("Method is not valid. Make sure it is a valid upper case HTTP/1.1 method written ");
-			
-			//TODO: Make sure it has either http or https here.. do a regex. Make sure other headers are available (ssl?)
-			
+
+			Add("HTTP_HOST", u.Host);
+			if (u.Scheme == Uri.UriSchemeHttps)
+				Add("HTTPS", "https"); //TODO: Is this what nginx does, for example?
 			Add("SCRIPT_NAME", u.AbsolutePath);
 			Add("DOCUMENT_URI", u.AbsolutePath);
 			Add("REQUEST_METHOD", method);

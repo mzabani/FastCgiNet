@@ -8,11 +8,12 @@ namespace FastCgiNet
 	internal class NameValuePairEnumerator : IEnumerator<NameValuePair>
 	{
 		private Stream Contents;
-		private int bufsize = 128;
+		private int bufsize;
 		private byte[] buf;
 		private int unusedBytes;
 		private NameValuePair lastIncompleteNvp;
 		private int ContentLength;
+		private int NvpBytesYielded;
 
 		private void ShiftBufferLeftBy(int times)
 		{
@@ -22,17 +23,9 @@ namespace FastCgiNet
 
 		public bool MoveNext()
 		{
-			//TODO: NVPs split across different records.
-			// Perhaps enumerating parameters should not be available in a ParamsRecord, nor adding them.
-			// It makes sense for Stream records that a higher-level interface provides writing and reading from, one
-			// that has no size limits and hides away record boundaries from the user.
 			int readBytes;
 			while ((readBytes = Contents.Read(buf, unusedBytes, bufsize - unusedBytes)) > 0)
 			{
-				// Do a gte instead of an equals check to be benevolent in case of malformed name value pairs
-				if (Contents.Position >= ContentLength)
-					break;
-
 				int endOfNvp;
 				if (lastIncompleteNvp == null)
 				{
@@ -45,6 +38,7 @@ namespace FastCgiNet
 							lastIncompleteNvp = null;
 							ShiftBufferLeftBy(endOfNvp + 1);
 							unusedBytes = unusedBytes + readBytes - endOfNvp - 1;
+							NvpBytesYielded += currentNvp.GetBytes().Sum(nvpB => nvpB.Count);
 							return true;
 						}
 						else
@@ -67,6 +61,7 @@ namespace FastCgiNet
 						lastIncompleteNvp = null;
 						ShiftBufferLeftBy(endOfNvp + 1);
 						unusedBytes = unusedBytes + readBytes - endOfNvp - 1;
+						NvpBytesYielded += currentNvp.GetBytes().Sum(nvpB => nvpB.Count);
 						return true;
 					}
 					else
@@ -76,10 +71,15 @@ namespace FastCgiNet
 				}
 			}
 
+			// Check if all is right
+			if (ContentLength != NvpBytesYielded)
+				//TODO: Proper exception that contains amount of bytes yielded and expected content length
+				throw new InvalidOperationException("The NameValue pairs yielded here do not match the content length of the record");
+
 			// Reached the end of the stream, no more nvps from now on..
 			return false;
 		}
-		public void Reset ()
+		public void Reset()
 		{
 			throw new NotSupportedException();
 		}
@@ -104,67 +104,13 @@ namespace FastCgiNet
 			}
 		}
 
-		/*internal void FeedBytes(byte[] data, int offset, int length, out int lastByteOfRecord)
-		{
-			// The length must be greater than zero because otherwise we don't know what to set lastByteOfRecord to..
-			if (length <= 0)
-				throw new ArgumentOutOfRangeException("length must be greater than zero");
-
-			// Are we already done here? Check.
-			if (expectedContentLength + expectedPaddingLength == addedexpectedContentLength + expectedPaddingLength)
-			{
-				throw new InvalidOperationException("This record is all set! You can't add more content or padding");
-			}
-
-			// Now feed every byte..
-			int bytesFed = 0;
-			int lastValuePairByteOffset;
-			while (bytesFed < length && addedexpectedContentLength + bytesFed < expectedContentLength)
-			{
-				if (currentValuePair == null)
-				{
-					currentValuePair = new NameValuePair(data, offset + bytesFed, length - bytesFed, out lastValuePairByteOffset);
-					Add(currentValuePair);
-				}
-				else
-					currentValuePair.FeedBytes(data, offset + bytesFed, length - bytesFed, out lastValuePairByteOffset);
-
-				if (lastValuePairByteOffset == -1)
-					break;
-
-				bytesFed = lastValuePairByteOffset - offset + 1;
-				currentValuePair = null;
-			}
-
-			addedexpectedContentLength += bytesFed;
-
-			// There could still be bytes available to feed for the padding, if the content was all added
-			if (addedexpectedContentLength == expectedContentLength)
-			{
-				int paddingAvailable = length - bytesFed;
-				int paddingNeeded = expectedPaddingLength - addedexpectedPaddingLength;
-
-				if (paddingAvailable >= paddingNeeded)
-				{
-					lastByteOfRecord = offset + bytesFed + paddingNeeded - 1;
-					addedexpectedPaddingLength = expectedPaddingLength;
-				}
-				else
-				{
-					lastByteOfRecord = -1;
-					addedexpectedPaddingLength += paddingAvailable;
-				}
-			}
-			else
-			{
-				lastByteOfRecord = -1;
-			}
-		}*/
-
 		public NameValuePairEnumerator(Stream s, int contentLength)
 		{
 			Contents = s;
 			ContentLength = contentLength;
+			NvpBytesYielded = 0;
+
+			bufsize = 128;
 			buf = new byte[bufsize];
 		}
 	}

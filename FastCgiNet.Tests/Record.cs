@@ -7,60 +7,35 @@ using FastCgiNet;
 namespace FastCgiNet.Tests
 {
 	[TestFixture]
-	public class Test
+	public class Record
 	{
-		void GetNVP11(byte[] buffer, int offset)
-		{
-			buffer[offset] = 4;
-			buffer[offset + 1] = 5;
-			
-			buffer[offset + 2] = (byte)'n';
-			buffer[offset + 3] = (byte)'a';
-			buffer[offset + 4] = (byte)'m';
-			buffer[offset + 5] = (byte)'e';
-			
-			buffer[offset + 6] = (byte)'v';
-			buffer[offset + 7] = (byte)'a';
-			buffer[offset + 8] = (byte)'l';
-			buffer[offset + 9] = (byte)'u';
-			buffer[offset + 10] = (byte)'e';
-		}
-
-		void GetNVP(byte[] buffer, int offset, string name, string value)
-		{
-			throw new NotImplementedException();
-
-			/*if (name.Length > 0x7f)
-			{
-				buffer[offset++] = (name.Length >> 24) | 0x100;
-				buffer[offset++] = name.Length >> 16;
-				buffer[offset++] = name.Length >> 8;
-				buffer[offset++] = name.Length >> 24;
-			}*/
-		}
-
-		[Test]
-		public void TestNameValuePair11 ()
-		{
-			byte[] data = new byte[100];
-			int offset = 3;
-
-			GetNVP11(data, offset);
-
-			int lastByteIdx;
-			NameValuePair nvp;
-			bool createdNvp = NVPFactory.TryCreateNVP(data, offset, 100 - offset, out nvp, out lastByteIdx);
-
-			Assert.AreEqual(true, createdNvp);
-
-			Assert.AreEqual(offset + 10, lastByteIdx);
-			Assert.AreEqual("name", nvp.Name);
-			Assert.AreEqual("value", nvp.Value);
-		}
-
 		[Test]
 		public void ParamsRecord() {
+			using (var paramsRec = new ParamsRecord(1))
+			{
+				paramsRec.Add("TEST", "WHATEVER");
 
+				var bytes = paramsRec.GetBytes().ToList();
+				var header = bytes[0];
+				var recFactory = new RecordFactory();
+				int endOfRecord;
+				using (var receivedRec = (ParamsRecord)recFactory.CreateRecordFromHeader(header.Array, header.Offset, header.Count, out endOfRecord))
+				{
+					Console.WriteLine("{0} segments available", bytes.Count);
+					Assert.AreEqual(paramsRec.ContentLength, receivedRec.ContentLength);
+					for (int i = 1; i < bytes.Count; ++i)
+					{
+						Assert.AreEqual(-1, endOfRecord);
+						receivedRec.FeedBytes(bytes[i].Array, bytes[i].Offset, bytes[i].Count, out endOfRecord);
+					}
+
+					Console.WriteLine("end of record is {0}", endOfRecord);
+
+					NameValuePair onlyParameterAdded = receivedRec.Parameters.First();
+					Assert.AreEqual("TEST", onlyParameterAdded.Name);
+					Assert.AreEqual("WHATEVER", onlyParameterAdded.Value);
+				}
+			}
 		}
 
 		[Test]
@@ -81,17 +56,14 @@ namespace FastCgiNet.Tests
 		[Test]
 		public void TryToCreateRecordWithLessThanHeaderBytes()
 		{
-			byte[] data = new byte[7];
-			int endOfRecord;
-			try
-			{
+			Assert.Throws<ArgumentException>(() => {
+				byte[] data = new byte[7];
+				int endOfRecord;
+
 				using (var rec = new StdoutRecord(data, 0, data.Length, out endOfRecord))
 				{
 				}
-			}
-			catch (ArgumentException)
-			{
-			}
+			});
 		}
 
 		[Test]

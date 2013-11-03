@@ -53,8 +53,11 @@ namespace FastCgiNet
 		/// Enumerates byte array segments that compose this record. This is useful to send through a socket, for instance.
 		/// Do not modify these byte arrays as they may be the byte arrays that form the underlying stream.
 		/// </summary>
-		/// <remarks>The first ArraySegment enumerated is guaranteed to be the header of the record, being therefore 8 bytes long.</remarks>
+		/// <remarks>The first ArraySegment enumerated is guaranteed to be the header of the record, being therefore 8 bytes long. This method rewinds the stream before and after all elements are enumerated.</remarks>
 		public override IEnumerable<ArraySegment<byte>> GetBytes() {
+			if (Contents != null)
+				Contents.Seek(0, SeekOrigin.Begin);
+
 			ContentLength = (ushort) (Contents == null ? 0 : Contents.Length);
 			yield return CalculatePaddingAndGetHeaderBytes();
 			
@@ -72,6 +75,9 @@ namespace FastCgiNet
 
 			foreach (var segment in GetPaddingBytes())
 				yield return segment;
+
+			if (Contents != null)
+				Contents.Seek(0, SeekOrigin.Begin);
 		}
 
 		/// <summary>

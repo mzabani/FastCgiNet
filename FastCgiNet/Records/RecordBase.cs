@@ -23,7 +23,7 @@ namespace FastCgiNet
 			{
 				return (RecordType)Header[1];
 			}
-			protected set
+			private set
 			{
 				Header[1] = (byte)value;
 			}
@@ -128,7 +128,7 @@ namespace FastCgiNet
 				throw new InvalidOperationException("Can't do this operation. It would go out of the array's bounds");
 		}
 
-		public RecordBase()
+		private RecordBase()
 		{
 			Header = new byte[8];
 			Version = 1;

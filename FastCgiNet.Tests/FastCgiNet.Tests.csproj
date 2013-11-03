@@ -41,6 +41,8 @@
     <Compile Include="EndOfRecord.cs" />
     <Compile Include="GetBytesFromRecord.cs" />
     <Compile Include="StaticHelper.cs" />
+    <Compile Include="Nvp.cs" />
+    <Compile Include="ByteUtils.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

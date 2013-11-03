@@ -318,37 +318,6 @@ namespace FastCgiNet
 			}
 		}
 
-		/*
-		void WaitForConnections()
-		{
-			int pollTime_us = -1;
-			List<Socket> listenSockets = new List<Socket>(2);
-			while (IsRunning)
-			{
-				if (tcpListenSocket.IsBound && !listenSockets.Contains(tcpListenSocket))
-					listenSockets.Add(tcpListenSocket);
-				if (unixListenSocket.IsBound && !listenSockets.Contains(unixListenSocket))
-					listenSockets.Add(unixListenSocket);
-
-				Socket.Select(listenSockets, null, null, pollTime_us);
-
-				foreach (var sock in listenSockets)
-				{
-					try
-					{
-						sock.BeginAccept(AcceptConnection, null);
-					}
-					catch (SocketException)
-					{
-						//TODO: Look for the code for a "no connection pending" error at the Windows Sockets version 2 API error code documentation,
-						// and continue only in that case..
-						// Also, treat unix socket differently (maybe accept the connection synchronously isn't a bad idea for unix sockets, for example)
-						continue;
-					}
-				}
-			}
-		}*/
-
 		/// <summary>
 		/// Set this to an <see cref="FastCgiNet.Logging.ILogger"/> to log usage information.
 		/// </summary>
@@ -392,8 +361,6 @@ namespace FastCgiNet
 				unixListenSocket.Listen(listenBacklog);
 
 			// Wait for connections without blocking
-			//Task.Factory.StartNew(WaitForConnections);
-
 			IsRunning = true;
 
 			// Block here
@@ -418,7 +385,6 @@ namespace FastCgiNet
 			//TODO: If one of the tasks below is delayed (why in the world would that happen, idk) then this
 			// method returns without being ready to accept connections..
 			Task.Factory.StartNew(SuperServerLoop);
-			//Task.Factory.StartNew(WaitForConnections);
 		}
 
 		/// <summary>

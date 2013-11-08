@@ -43,6 +43,7 @@
     <Compile Include="StaticHelper.cs" />
     <Compile Include="Nvp.cs" />
     <Compile Include="ByteUtils.cs" />
+    <Compile Include="BeginRequestRecordTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

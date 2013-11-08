@@ -17,7 +17,10 @@ namespace FastCgiNet
 			}
 			set
 			{
-				throw new NotImplementedException();
+				// MSB is byte index 0, LSB is byte index 1
+				ushort role = (ushort)value;
+				RoleAndFlags[0] = (byte) (role & 0xFF00);
+				RoleAndFlags[1] = (byte) (role & 0xFF);
 			}
 		}
 		

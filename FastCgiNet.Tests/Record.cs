@@ -10,7 +10,7 @@ namespace FastCgiNet.Tests
 	public class Record
 	{
 		[Test]
-		public void ParamsRecord() {
+		public void ParamsRecordOneParameter() {
 			using (var paramsRec = new ParamsRecord(1))
 			{
 				paramsRec.Add("TEST", "WHATEVER");
@@ -34,6 +34,43 @@ namespace FastCgiNet.Tests
 					NameValuePair onlyParameterAdded = receivedRec.Parameters.First();
 					Assert.AreEqual("TEST", onlyParameterAdded.Name);
 					Assert.AreEqual("WHATEVER", onlyParameterAdded.Value);
+				}
+			}
+		}
+
+		[Test]
+		public void ParamsRecordManyParameters() {
+			int numParams = 100;
+			using (var paramsRec = new ParamsRecord(1))
+			{
+				for (int i = 0; i < numParams; ++i)
+					paramsRec.Add("TEST" + i, "WHATEVER" + i);
+				
+				var bytes = paramsRec.GetBytes().ToList();
+				var header = bytes[0];
+				var recFactory = new RecordFactory();
+				int endOfRecord;
+				using (var receivedRec = (ParamsRecord)recFactory.CreateRecordFromHeader(header.Array, header.Offset, header.Count, out endOfRecord))
+				{
+					Console.WriteLine("{0} segments available", bytes.Count);
+					Assert.AreEqual(paramsRec.ContentLength, receivedRec.ContentLength);
+					for (int i = 1; i < bytes.Count; ++i)
+					{
+						Assert.AreEqual(-1, endOfRecord);
+						receivedRec.FeedBytes(bytes[i].Array, bytes[i].Offset, bytes[i].Count, out endOfRecord);
+					}
+					
+					Console.WriteLine("end of record is {0}", endOfRecord);
+
+					int paramsCount = 0;
+					foreach (var par in receivedRec.Parameters)
+					{
+						Assert.AreEqual("TEST" + paramsCount, par.Name);
+						Assert.AreEqual("WHATEVER" + paramsCount, par.Value);
+						paramsCount++;
+					}
+
+					Assert.AreEqual(numParams, paramsCount);
 				}
 			}
 		}

@@ -1,6 +1,7 @@
 *.dll
 *.mdb
 *.userprefs
+/FastCgiNet/obj
 /FastCgiNet/bin
 /FastCgiNet.Tests/bin
 /FastCgiNet.Tests/test-results

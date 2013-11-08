@@ -57,6 +57,7 @@
     <Compile Include="NameValuePairEnumerator.cs" />
     <Compile Include="NVPFactory.cs" />
     <Compile Include="Exceptions\InsufficientBytesException.cs" />
+    <Compile Include="SocketReader.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

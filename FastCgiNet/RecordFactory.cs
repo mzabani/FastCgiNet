@@ -25,13 +25,21 @@ namespace FastCgiNet
 			{
 				return new StdinRecord(header, offset, length, out endOfRecord);
 			}
+			else if (recordType == RecordType.FCGIStdout)
+			{
+				return new StdoutRecord(header, offset, length, out endOfRecord);
+			}
+			else if (recordType == RecordType.FCGIStderr)
+			{
+				return new StderrRecord(header, offset, length, out endOfRecord);
+			}
 			else if (recordType == RecordType.FCGIParams)
 			{
 				return new ParamsRecord(header, offset, length, out endOfRecord);
 			}
 			else
 			{
-				throw new NotImplementedException("");
+				throw new NotImplementedException("Record of type " + recordType + " is not implemented yet");
 				//TODO: Other types of records
 			}
 		}

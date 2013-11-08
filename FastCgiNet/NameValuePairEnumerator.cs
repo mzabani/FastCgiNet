@@ -24,8 +24,24 @@ namespace FastCgiNet
 		public bool MoveNext()
 		{
 			int readBytes;
-			while ((readBytes = Contents.Read(buf, unusedBytes, bufsize - unusedBytes)) > 0)
+			while (true)
 			{
+				// Know when to stop
+				if (NvpBytesYielded == ContentLength)
+					return false;
+
+				// No need to read from the stream if our yielded bytes plus unusedBytes is equal to the expected content length
+				if (unusedBytes + NvpBytesYielded < ContentLength)
+				{
+					int bytesToRead = bufsize - unusedBytes;
+					if (bytesToRead > ContentLength - (unusedBytes + NvpBytesYielded))
+						bytesToRead = ContentLength - (unusedBytes + NvpBytesYielded);
+
+					readBytes = Contents.Read(buf, unusedBytes, bytesToRead);
+				}
+				else
+					readBytes = 0;
+
 				int endOfNvp;
 				if (lastIncompleteNvp == null)
 				{
@@ -70,14 +86,6 @@ namespace FastCgiNet
 					}
 				}
 			}
-
-			// Check if all is right
-			if (ContentLength != NvpBytesYielded)
-				//TODO: Proper exception that contains amount of bytes yielded and expected content length
-				throw new InvalidOperationException("The NameValue pairs yielded here do not match the content length of the record");
-
-			// Reached the end of the stream, no more nvps from now on..
-			return false;
 		}
 		public void Reset()
 		{

@@ -1,0 +1,3 @@
+/home/mzabani/Projects/FastCgiNet/FastCgiNet/bin/Release/FastCgiNet.dll
+/home/mzabani/Projects/FastCgiNet/FastCgiNet/obj/Release/FastCgiNet.dll
+/home/mzabani/Projects/FastCgiNet/FastCgiNet/obj/Release/.NETFramework,Version=v4.0.AssemblyAttribute.cs

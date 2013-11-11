@@ -16,4 +16,3 @@ namespace FastCgiNet.Logging
 		void Fatal(Exception e, string msg, params object[] prms);
 	}
 }
-

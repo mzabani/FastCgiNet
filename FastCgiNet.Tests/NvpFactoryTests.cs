@@ -7,7 +7,7 @@ using FastCgiNet;
 namespace FastCgiNet.Tests
 {
 	[TestFixture]
-	public class Nvp
+	public class NvpFactoryTests
 	{
 		private void GetNVP11(byte[] buffer, int offset)
 		{
@@ -51,7 +51,7 @@ namespace FastCgiNet.Tests
 			
 			int lastByteIdx;
 			NameValuePair nvp;
-			bool createdNvp = NVPFactory.TryCreateNVP(data, offset, 100 - offset, out nvp, out lastByteIdx);
+			bool createdNvp = NvpFactory.TryCreateNVP(data, offset, 100 - offset, out nvp, out lastByteIdx);
 			
 			Assert.AreEqual(true, createdNvp);
 			

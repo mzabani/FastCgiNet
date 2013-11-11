@@ -2,7 +2,7 @@ using System;
 
 namespace FastCgiNet
 {
-	internal class NVPFactory
+	internal class NvpFactory
 	{
 		private static int GetLengthFromByteArray(byte[] arr, int offset, int length)
 		{
@@ -26,7 +26,7 @@ namespace FastCgiNet
 
 		public static bool TryCreateNVP(byte[] firstData, int offset, int length, out NameValuePair createdNvp, out int endOfNvp)
 		{
-			if (ByteCopyUtils.CheckArrayBounds(firstData, offset, length) == false)
+			if (ByteUtils.CheckArrayBounds(firstData, offset, length) == false)
 				throw new InvalidOperationException(""); //TODO: Descriptive message
 
 			// Gets the lengths of the name and the value

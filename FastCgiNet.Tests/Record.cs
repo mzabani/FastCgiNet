@@ -21,15 +21,12 @@ namespace FastCgiNet.Tests
 				int endOfRecord;
 				using (var receivedRec = (ParamsRecord)recFactory.CreateRecordFromHeader(header.Array, header.Offset, header.Count, out endOfRecord))
 				{
-					Console.WriteLine("{0} segments available", bytes.Count);
 					Assert.AreEqual(paramsRec.ContentLength, receivedRec.ContentLength);
 					for (int i = 1; i < bytes.Count; ++i)
 					{
 						Assert.AreEqual(-1, endOfRecord);
 						receivedRec.FeedBytes(bytes[i].Array, bytes[i].Offset, bytes[i].Count, out endOfRecord);
 					}
-
-					Console.WriteLine("end of record is {0}", endOfRecord);
 
 					NameValuePair onlyParameterAdded = receivedRec.Parameters.First();
 					Assert.AreEqual("TEST", onlyParameterAdded.Name);
@@ -52,15 +49,12 @@ namespace FastCgiNet.Tests
 				int endOfRecord;
 				using (var receivedRec = (ParamsRecord)recFactory.CreateRecordFromHeader(header.Array, header.Offset, header.Count, out endOfRecord))
 				{
-					Console.WriteLine("{0} segments available", bytes.Count);
 					Assert.AreEqual(paramsRec.ContentLength, receivedRec.ContentLength);
 					for (int i = 1; i < bytes.Count; ++i)
 					{
 						Assert.AreEqual(-1, endOfRecord);
 						receivedRec.FeedBytes(bytes[i].Array, bytes[i].Offset, bytes[i].Count, out endOfRecord);
 					}
-					
-					Console.WriteLine("end of record is {0}", endOfRecord);
 
 					int paramsCount = 0;
 					foreach (var par in receivedRec.Parameters)

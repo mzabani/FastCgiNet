@@ -32,7 +32,7 @@ namespace FastCgiNet
 			}
 			set
 			{
-				RoleAndFlags[2] = (byte) (value ? 1 : 0);
+				RoleAndFlags[2] = (byte) (value ? 0 : 1);
 			}
 		}
 

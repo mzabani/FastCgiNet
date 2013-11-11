@@ -70,13 +70,7 @@ namespace FastCgiNet.Tests
 				s.Write(anything, 0, i == 63 ? 1023 : 1024);
 
 			// Exception now!
-			try
-			{
-				s.Write(anything, 0, 1);
-			}
-			catch (InvalidOperationException)
-			{
-			}
+			Assert.Throws<InvalidOperationException>(() => s.Write(anything, 0, 1));
 		}
 	}
 }

@@ -45,7 +45,7 @@ namespace FastCgiNet
 				int endOfNvp;
 				if (lastIncompleteNvp == null)
 				{
-					if (NVPFactory.TryCreateNVP(buf, 0, unusedBytes + readBytes, out lastIncompleteNvp, out endOfNvp))
+					if (NvpFactory.TryCreateNVP(buf, 0, unusedBytes + readBytes, out lastIncompleteNvp, out endOfNvp))
 					{
 						// We had enough bytes to create the nvp. Did we have enough for all of its contents too?
 						if (endOfNvp >= 0)

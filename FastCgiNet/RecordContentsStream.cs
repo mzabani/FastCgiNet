@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 
@@ -154,6 +155,42 @@ namespace FastCgiNet
 			{
 				Seek(value, SeekOrigin.Begin);
 			}
+		}
+
+		public override bool Equals (object obj)
+		{
+			if (obj == null)
+				return false;
+
+			var b = obj as RecordContentsStream;
+			if (b == null)
+				return false;
+
+			// Check lenghts first
+			if (this.Length != b.Length)
+				return false;
+
+			// Compare byte by byte.. kind of expensive
+			byte[] bufForB = new byte[128];
+			byte[] bufForA = new byte[128];
+			this.Position = 0;
+			b.Position = 0;
+
+			int bytesReadFromB;
+			while ((bytesReadFromB = b.Read(bufForB, 0, bufForB.Length)) > 0)
+			{
+				this.Read(bufForA, 0, bufForA.Length);
+
+				if (!ByteUtils.AreEqual(bufForA, bufForB))
+					return false;
+			}
+
+			return true;
+		}
+
+		public override int GetHashCode ()
+		{
+			return length + 31 * MemoryBlocks.Sum(mb => mb.GetHashCode());
 		}
 
 		public RecordContentsStream ()

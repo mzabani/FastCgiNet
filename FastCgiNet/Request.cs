@@ -1,22 +1,23 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
-using FastCgiNet.Logging;
 
 namespace FastCgiNet
 {
+	public delegate void SocketClosed(Request req, bool abrupt);
+
 	/// <summary>
 	/// This class identifies a FastCgi request uniquely in time.
 	/// </summary>
 	public class Request
 	{
 		public ushort RequestId { get; private set; }
-		internal Socket Socket { get; private set; }
-		internal RecordBase LastIncompleteRecord;
-		private ILogger Logger;
+		public Socket Socket { get; private set; }
 
-		private ConcurrentDictionary<Socket, Request> RequestsTable;
+		/// <summary>
+		/// Warns when the socket for this request is closed because <see cref="CloseSocket()"/> was called.
+		/// </summary>
+		public SocketClosed OnSocketClose = delegate {};
 
 		/// <summary>
 		/// Sends a record over the wire. This method does not throw if the socket has been closed.
@@ -39,18 +40,10 @@ namespace FastCgiNet
 			}
 			catch (ObjectDisposedException)
 			{
-				//TODO: Better logging, i.e. identify Request
-				if (Logger != null)
-					Logger.Info("Could not send data through socket because it was closed");
-
 				return false;
 			}
 			catch (SocketException e)
 			{
-				//TODO: Better logging, i.e. identify Request
-				if (Logger != null)
-					Logger.Info("Could not send data through socket because it was closed");
-
 				if (e.SocketErrorCode != SocketError.Shutdown)
 					throw;
 
@@ -74,34 +67,19 @@ namespace FastCgiNet
 				Socket.Close();
 				Socket.Dispose();
 				connectionClosedError = false;
+				OnSocketClose(this, false);
 			}
 			catch (ObjectDisposedException)
 			{
 			}
 			catch (SocketException e)
 			{
-				//TODO: Better logging, i.e. identify Request
-				if (Logger != null)
-					Logger.Info("Could not close socket because it was already closed");
-
 				if (e.SocketErrorCode != SocketError.Shutdown)
 					throw;
 			}
 
-			if (RequestsTable != null)
-			{
-				Request trash;
-				bool elementRemoved = RequestsTable.TryRemove(Socket, out trash);
-
-				if (elementRemoved == false && connectionClosedError == false)
-				{
-					//TODO: Better logging, i.e. identify Request
-					if (Logger != null)
-						Logger.Info("Could not close socket because it was already closed");
-
-					connectionClosedError = true;
-				}
-			}
+			// If the connection was already closed, then this is abrupt termination.
+			OnSocketClose(this, true);
 
 			return !connectionClosedError;
 		}
@@ -111,7 +89,7 @@ namespace FastCgiNet
 		/// will be preserved until this object's disposal.
 		/// </summary>
 		/// <param name="rec">The BeginRequest record.</param> 
-		internal void SetBeginRequest(BeginRequestRecord rec)
+		public void SetBeginRequest(BeginRequestRecord rec)
 		{
 			if (rec == null)
 				throw new ArgumentNullException("rec");
@@ -138,42 +116,21 @@ namespace FastCgiNet
 		}
 
 		#region Constructors
+		public Request(Socket s)
+		{
+			if (s == null)
+				throw new ArgumentNullException("s");
+			
+			this.Socket = s;
+		}
+
 		public Request(Socket s, BeginRequestRecord beginRequestRecord)
-		{
-			if (s == null)
-				throw new ArgumentNullException("s");
-
-			SetBeginRequest(beginRequestRecord);
-
-			this.Socket = s;
-		}
-
-		public Request (Socket s, BeginRequestRecord beginRequest, ILogger logger)
-			: this(s, beginRequest)
-		{
-			if (logger == null)
-				throw new ArgumentNullException("Logger is null. Use another constructor if you don't want to set a logger");
-
-			Logger = logger;
-		}
-
-		private Request(Socket s)
-		{
-			if (s == null)
-				throw new ArgumentNullException("s");
-
-			this.Socket = s;
-		}
-
-		private Request(Socket s, ILogger logger)
 			: this(s)
 		{
-			if (logger == null)
-				throw new ArgumentNullException("Logger is null. Use another constructor if you don't want to set a logger");
-			
-			this.Logger = logger;
+			SetBeginRequest(beginRequestRecord);
 		}
 
+		/*
 		/// <summary>
 		/// This constructor helps maintain a table of requests.
 		/// </summary>
@@ -203,6 +160,7 @@ namespace FastCgiNet
 
 			this.RequestsTable = requestsTable;
 		}
+		*/
 		#endregion
 	}
 }

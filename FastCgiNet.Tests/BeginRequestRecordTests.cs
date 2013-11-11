@@ -25,5 +25,16 @@ namespace FastCgiNet.Tests
 			rec.Role = role;
 			Assert.AreEqual(role, rec.Role);
 		}
+
+		[Test]
+		public void SetAndGetAppMustClose() {
+			var rec = new BeginRequestRecord(1);
+			
+			rec.ApplicationMustCloseConnection = true;
+			Assert.AreEqual(true, rec.ApplicationMustCloseConnection);
+
+			rec.ApplicationMustCloseConnection = false;
+			Assert.AreEqual(false, rec.ApplicationMustCloseConnection);
+		}
 	}
 }

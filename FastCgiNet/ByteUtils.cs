@@ -1,8 +1,9 @@
 using System;
+using System.Linq;
 
 namespace FastCgiNet
 {
-	class ByteCopyUtils
+	internal class ByteUtils
 	{
 		/// <summary>
 		/// Verifies if going from position <paramref name="offset"/> for <paramref name="length"/> bytes would 
@@ -17,6 +18,15 @@ namespace FastCgiNet
 				return false;
 
 			return true;
+		}
+
+		public static bool AreEqual(byte[] a, byte[] b)
+		{
+			//TODO: Unsafe code with memory-aligned reads would be much faster!
+			if (a == null || b == null)
+				throw new ArgumentNullException("Both arrays have to be not null");
+
+			return a.Length == b.Length && a.SequenceEqual(b);
 		}
 	}
 }

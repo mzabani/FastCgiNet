@@ -41,9 +41,12 @@
     <Compile Include="EndOfRecord.cs" />
     <Compile Include="GetBytesFromRecord.cs" />
     <Compile Include="StaticHelper.cs" />
-    <Compile Include="Nvp.cs" />
     <Compile Include="ByteUtils.cs" />
     <Compile Include="BeginRequestRecordTests.cs" />
+    <Compile Include="ByteReaderTests.cs" />
+    <Compile Include="Logging\DebugLogger.cs" />
+    <Compile Include="RecordBaseTests.cs" />
+    <Compile Include="NvpFactoryTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -51,5 +54,8 @@
       <Project>{A0F27C46-BC4E-4611-AF1F-A2B52A3746BD}</Project>
       <Name>FastCgiNet</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Logging\" />
   </ItemGroup>
 </Project>

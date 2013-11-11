@@ -18,7 +18,7 @@ namespace FastCgiNet
 				Header[0] = value;
 			}
 		}
-		public virtual RecordType RecordType {
+		public RecordType RecordType {
 			get
 			{
 				return (RecordType)Header[1];
@@ -124,8 +124,27 @@ namespace FastCgiNet
 		{
 			if (length <= 0)
 				throw new ArgumentOutOfRangeException("The length to be copied has to be greater than zero"); 
-			else if (ByteCopyUtils.CheckArrayBounds(data, offset, length) == false)
+			else if (ByteUtils.CheckArrayBounds(data, offset, length) == false)
 				throw new InvalidOperationException("Can't do this operation. It would go out of the array's bounds");
+		}
+
+		public override bool Equals (object obj)
+		{
+			if (obj == null)
+				return false;
+
+			var b = obj as RecordBase;
+			if (b == null)
+				return false;
+
+			// Comparing headers is all we can do here
+			return RecordType == b.RecordType && RequestId == b.RequestId && ContentLength == b.ContentLength && Version == b.Version;
+		}
+
+		public override int GetHashCode ()
+		{
+			//TODO: Do better than this
+			return base.GetHashCode ();
 		}
 
 		private RecordBase()

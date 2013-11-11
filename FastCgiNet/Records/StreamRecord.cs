@@ -130,6 +130,23 @@ namespace FastCgiNet
 				Contents.Dispose();
 		}
 
+		public override bool Equals (object obj)
+		{
+			if (obj == null)
+				return false;
+
+			var b = obj as StreamRecord;
+			if (b == null)
+				return false;
+
+			return b.Contents.Equals(this.Contents) && base.Equals(b);
+		}
+
+		public override int GetHashCode ()
+		{
+			return Contents.GetHashCode();
+		}
+
 		public StreamRecord(RecordType recordType, ushort requestId)
 			: base(recordType, requestId)
 		{

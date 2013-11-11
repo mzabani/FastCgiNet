@@ -4,11 +4,6 @@ using System.Runtime.CompilerServices;
 // Information about this assembly is defined by the following attributes. 
 // Change them to the values specific to your project.
 
-[InternalsVisibleTo("FastCgiNet.Tests")]
-
-// Just for a while
-[InternalsVisibleTo("Fos.Tests")]
-
 [assembly: AssemblyTitle("FastCgiNet")]
 [assembly: AssemblyDescription("Client side FastCgi 100% managed library")]
 [assembly: AssemblyConfiguration("")]
@@ -30,3 +25,7 @@ using System.Runtime.CompilerServices;
 //[assembly: AssemblyDelaySign(false)]
 //[assembly: AssemblyKeyFile("")]
 
+[assembly: InternalsVisibleTo("FastCgiNet.Tests")]
+
+// Just for a while
+[assembly: InternalsVisibleTo("Fos.Tests")]

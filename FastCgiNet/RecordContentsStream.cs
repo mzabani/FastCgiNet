@@ -176,8 +176,7 @@ namespace FastCgiNet
 			this.Position = 0;
 			b.Position = 0;
 
-			int bytesReadFromB;
-			while ((bytesReadFromB = b.Read(bufForB, 0, bufForB.Length)) > 0)
+			while (b.Read(bufForB, 0, bufForB.Length) > 0)
 			{
 				this.Read(bufForA, 0, bufForA.Length);
 

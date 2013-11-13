@@ -4,7 +4,7 @@ using System.Net.Sockets;
 
 namespace FastCgiNet
 {
-	public delegate void SocketClosed(Request req, bool abrupt);
+	public delegate void SocketClosed();
 
 	/// <summary>
 	/// This class identifies a FastCgi request uniquely in time.
@@ -15,9 +15,14 @@ namespace FastCgiNet
 		public Socket Socket { get; private set; }
 
 		/// <summary>
-		/// Warns when the socket for this request is closed because <see cref="CloseSocket()"/> was called.
+		/// Warns when the socket for this request was closed by our side because <see cref="CloseSocket()"/> was called.
 		/// </summary>
 		public SocketClosed OnSocketClose = delegate {};
+
+        /// <summary>
+        /// Warns when the socket for this request was closed by the other side. Someone still must call <see cref="CloseSocket()"/> for this to be triggered.
+        /// </summary>
+        public SocketClosed OnAbruptSocketClose = delegate {};
 
 		/// <summary>
 		/// Sends a record over the wire. This method does not throw if the socket has been closed.
@@ -60,14 +65,12 @@ namespace FastCgiNet
 		/// <remarks>If the connection was open but couldn't be closed for some reason, an exception is thrown. The caller should check for all possibilities because remote connection ending is not uncommon at all.</remarks>
 		public bool CloseSocket()
 		{
-			bool connectionClosedError = true;
-
 			try
 			{
 				Socket.Close();
 				Socket.Dispose();
-				connectionClosedError = false;
-				OnSocketClose(this, false);
+				OnSocketClose();
+				return true;
 			}
 			catch (ObjectDisposedException)
 			{
@@ -78,10 +81,10 @@ namespace FastCgiNet
 					throw;
 			}
 
-			// If the connection was already closed, then this is abrupt termination.
-			OnSocketClose(this, true);
+			// If the connection was already closed, then this is abrupt termination. We need to signal it too.
+			OnAbruptSocketClose();
 
-			return !connectionClosedError;
+			return false;
 		}
 
 		/// <summary>
@@ -97,13 +100,13 @@ namespace FastCgiNet
 			RequestId = rec.RequestId;
 		}
 
-		public override int GetHashCode ()
+		public override int GetHashCode()
 		{
 			// A request is uniquely identified by its socket and its requestid.
 			return Socket.GetHashCode() + 71 * RequestId;
 		}
 
-		public override bool Equals (object obj)
+		public override bool Equals(object obj)
 		{
 			if (obj == null)
 				return false;

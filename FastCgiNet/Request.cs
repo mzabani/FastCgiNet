@@ -19,11 +19,6 @@ namespace FastCgiNet
 		/// </summary>
 		public SocketClosed OnSocketClose = delegate {};
 
-        /// <summary>
-        /// Warns when the socket for this request was closed by the other side. Someone still must call <see cref="CloseSocket()"/> for this to be triggered.
-        /// </summary>
-        public SocketClosed OnAbruptSocketClose = delegate {};
-
 		/// <summary>
 		/// Sends a record over the wire. This method does not throw if the socket has been closed.
 		/// </summary>
@@ -60,6 +55,7 @@ namespace FastCgiNet
 
 		/// <summary>
 		/// Closes the socket from this connection safely, i.e. if it has already been closed, no exceptions happen.
+        /// If the connection wasn't closed and was closed successfuly, OnSocketClose is triggered.
 		/// </summary>
 		/// <returns>True if the connection has been successfuly closed, false if it was already closed or in the process of being closed.</returns>
 		/// <remarks>If the connection was open but couldn't be closed for some reason, an exception is thrown. The caller should check for all possibilities because remote connection ending is not uncommon at all.</remarks>
@@ -80,9 +76,6 @@ namespace FastCgiNet
 				if (e.SocketErrorCode != SocketError.Shutdown)
 					throw;
 			}
-
-			// If the connection was already closed, then this is abrupt termination. We need to signal it too.
-			OnAbruptSocketClose();
 
 			return false;
 		}

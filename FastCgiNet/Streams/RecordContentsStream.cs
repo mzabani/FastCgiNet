@@ -3,7 +3,7 @@ using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 
-namespace FastCgiNet
+namespace FastCgiNet.Streams
 {
 	/// <summary>
 	/// Use this Stream whenever you have to work with a record's contents. This stream is specially designed
@@ -14,14 +14,13 @@ namespace FastCgiNet
 		//TODO: Watch out for large byte arrays, since this would promote them straight to Gen2 of the GC,
 		// while they are in fact short lived objects
 
-		const int maxLength = 65535;
 		private long position;
 
 		/// <summary>
 		/// The blocks of memory that have been written to this stream.
 		/// </summary>
 		internal LinkedList<byte[]> MemoryBlocks;
-		int length;
+		private int length;
 
 		/// <summary>
 		/// Whether this record's contents reached its maximum size.
@@ -30,7 +29,7 @@ namespace FastCgiNet
 		{
 			get
 			{
-				return length == maxLength;
+				return length == RecordBase.MaxContentLength;
 			}
 		}
 
@@ -114,8 +113,8 @@ namespace FastCgiNet
 			position += count;
 
 			// Check that we didn't go over the size limit
-			if (length > maxLength)
-				throw new InvalidOperationException("You can't write more than " + maxLength + " bytes to a record's content");
+			if (length > RecordBase.MaxContentLength)
+				throw new InvalidOperationException("You can't write more than " + RecordBase.MaxContentLength + " bytes to a record's content");
 		}
 
 		public override bool CanRead {

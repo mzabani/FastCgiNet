@@ -1,18 +1,73 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using FastCgiNet.Streams;
 
 namespace FastCgiNet
 {
 	public delegate void SocketClosed();
 
 	/// <summary>
-	/// This class identifies a FastCgi request uniquely in time.
+	/// This class represents a FastCgi request running over a socket.
 	/// </summary>
-	public class Request
+	public class SocketRequest : Request
 	{
-		public ushort RequestId { get; private set; }
 		public Socket Socket { get; private set; }
+
+        #region Streams
+        private SocketStream paramsStream;
+        public override FastCgiStream ParamsStream
+        { 
+            get
+            {
+                if (paramsStream == null)
+                {
+                    paramsStream = new SocketStream(this, RecordType.FCGIParams);
+                }
+                
+                return paramsStream;
+            }
+        }
+        private SocketStream stdin;
+        public override FastCgiStream Stdin
+        { 
+            get
+            {
+                if (stdin == null)
+                {
+                    stdin = new SocketStream(this, RecordType.FCGIStdin);
+                }
+
+                return stdin;
+            }
+        }
+        private SocketStream stdout;
+        public override FastCgiStream Stdout
+        { 
+            get
+            {
+                if (stdout == null)
+                {
+                    stdout = new SocketStream(this, RecordType.FCGIStdout);
+                }
+                
+                return stdout;
+            }
+        }
+        private SocketStream stderr;
+        public override FastCgiStream Stderr
+        { 
+            get
+            {
+                if (stderr == null)
+                {
+                    stderr = new SocketStream(this, RecordType.FCGIStderr);
+                }
+                
+                return stderr;
+            }
+        }
+        #endregion
 
 		/// <summary>
 		/// Warns when the socket for this request was closed by our side because <see cref="CloseSocket()"/> was called.
@@ -44,8 +99,8 @@ namespace FastCgiNet
 			}
 			catch (SocketException e)
 			{
-				if (e.SocketErrorCode != SocketError.Shutdown)
-					throw;
+				if (!SocketHelper.IsConnectionAbortedByTheOtherSide(e))
+                    throw;
 
 				return false;
 			}
@@ -73,24 +128,11 @@ namespace FastCgiNet
 			}
 			catch (SocketException e)
 			{
-				if (e.SocketErrorCode != SocketError.Shutdown)
+				if (!SocketHelper.IsConnectionAbortedByTheOtherSide(e))
 					throw;
 			}
 
 			return false;
-		}
-
-		/// <summary>
-		/// Sets some basic properties of this request such as its <see cref="RequestId"/>. After this, this object's identity
-		/// will be preserved until this object's disposal.
-		/// </summary>
-		/// <param name="rec">The BeginRequest record.</param> 
-		public void SetBeginRequest(BeginRequestRecord rec)
-		{
-			if (rec == null)
-				throw new ArgumentNullException("rec");
-
-			RequestId = rec.RequestId;
 		}
 
 		public override int GetHashCode()
@@ -104,15 +146,15 @@ namespace FastCgiNet
 			if (obj == null)
 				return false;
 
-			var b = obj as Request;
+			var b = obj as SocketRequest;
 			if (b == null)
 				return false;
 
-			return b.Socket.Equals(this.Socket) && b.RequestId.Equals(this.RequestId);;
+			return b.Socket.Equals(this.Socket) && b.RequestId.Equals(this.RequestId);
 		}
 
 		#region Constructors
-		public Request(Socket s)
+		public SocketRequest(Socket s)
 		{
 			if (s == null)
 				throw new ArgumentNullException("s");
@@ -120,43 +162,11 @@ namespace FastCgiNet
 			this.Socket = s;
 		}
 
-		public Request(Socket s, BeginRequestRecord beginRequestRecord)
+		public SocketRequest(Socket s, BeginRequestRecord beginRequestRecord)
 			: this(s)
 		{
 			SetBeginRequest(beginRequestRecord);
-		}
-
-		/*
-		/// <summary>
-		/// This constructor helps maintain a table of requests.
-		/// </summary>
-		/// <remarks>This object WILL change its identity once a BeginRequest record has been associated to it. This means
-		/// <see cref="GetHashCode()"/> and <see cref="Equals(object b)"/> WILL behave differently after a call to 
-	    /// <see cref="SetBeginRequest(Record rec)"/>. This is not exposed in the public API.</remarks>
-		internal Request (Socket s, ConcurrentDictionary<Socket, Request> requestsTable, ILogger logger)
-			: this(s, logger)
-		{
-			if (requestsTable == null)
-				throw new ArgumentNullException("requestsTable");
-			
-			this.RequestsTable = requestsTable;
-		}
-
-		/// <summary>
-		/// This constructor helps maintain a table of requests.
-		/// </summary>
-		/// <remarks>This object WILL change its identity once a BeginRequest record has been associated to it. This means
-		/// <see cref="GetHashCode()"/> and <see cref="Equals(object b)"/> WILL behave differently after a call to 
-		/// <see cref="SetBeginRequest(Record rec)"/>. This is not exposed in the public API.</remarks>
-		internal Request (Socket s, ConcurrentDictionary<Socket, Request> requestsTable)
-			: this(s)
-		{
-			if (requestsTable == null)
-				throw new ArgumentNullException("requestsTable");
-
-			this.RequestsTable = requestsTable;
-		}
-		*/
+ 		}
 		#endregion
 	}
 }

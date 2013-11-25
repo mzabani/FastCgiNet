@@ -24,7 +24,7 @@ namespace FastCgiNet
 			}
 		}
 
-		public static bool TryCreateNVP(byte[] firstData, int offset, int length, out NameValuePair createdNvp, out int endOfNvp)
+		internal static bool TryCreateNvp(byte[] firstData, int offset, int length, out NameValuePair createdNvp, out int endOfNvp)
 		{
 			if (ByteUtils.CheckArrayBounds(firstData, offset, length) == false)
 				throw new InvalidOperationException(""); //TODO: Descriptive message
@@ -71,4 +71,3 @@ namespace FastCgiNet
 		}
 	}
 }
-

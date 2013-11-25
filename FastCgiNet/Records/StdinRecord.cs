@@ -4,7 +4,7 @@ using System.IO;
 
 namespace FastCgiNet
 {
-	public class StdinRecord : StreamRecord, IDisposable
+	public class StdinRecord : StreamRecordBase, IDisposable
 	{
 		/// <summary>
 		/// Initializes a new Stdin FastCgi record. You should not rely on this record's ContentLength, PaddingLength and EmptyContentData properties until

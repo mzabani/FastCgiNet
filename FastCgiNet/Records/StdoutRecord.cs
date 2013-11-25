@@ -4,7 +4,7 @@ using System.IO;
 
 namespace FastCgiNet
 {
-	public class StdoutRecord : StreamRecord, IDisposable
+	public class StdoutRecord : StreamRecordBase, IDisposable
 	{
 		/// <summary>
 		/// Initializes a new Stdout FastCgi record. You should not rely on this record's ContentLength, PaddingLength and EmptyContentData properties until

@@ -1,6 +1,7 @@
 using System;
 using FastCgiNet;
 using NUnit.Framework;
+using FastCgiNet.Streams;
 
 namespace FastCgiNet.Tests
 {

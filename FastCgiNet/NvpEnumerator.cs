@@ -5,15 +5,15 @@ using System.IO;
 
 namespace FastCgiNet
 {
-	internal class NameValuePairEnumerator : IEnumerator<NameValuePair>
+	internal class NvpEnumerator : IEnumerator<NameValuePair>
 	{
 		private Stream Contents;
 		private int bufsize;
 		private byte[] buf;
 		private int unusedBytes;
 		private NameValuePair lastIncompleteNvp;
-		private int ContentLength;
-		private int NvpBytesYielded;
+		private long ContentLength;
+		private long NvpBytesYielded;
 
 		private void ShiftBufferLeftBy(int times)
 		{
@@ -23,6 +23,8 @@ namespace FastCgiNet
 
 		public bool MoveNext()
 		{
+            //TODO: Improve this implementation. Specifically, don't shift the buffer left every time. Keep a smaller buffer
+            // that is big enough to create a Nvp and use it like ByteReader does
 			int readBytes;
 			while (true)
 			{
@@ -35,7 +37,7 @@ namespace FastCgiNet
 				{
 					int bytesToRead = bufsize - unusedBytes;
 					if (bytesToRead > ContentLength - (unusedBytes + NvpBytesYielded))
-						bytesToRead = ContentLength - (unusedBytes + NvpBytesYielded);
+						bytesToRead = (int)(ContentLength - (unusedBytes + NvpBytesYielded));
 
 					readBytes = Contents.Read(buf, unusedBytes, bytesToRead);
 				}
@@ -45,7 +47,7 @@ namespace FastCgiNet
 				int endOfNvp;
 				if (lastIncompleteNvp == null)
 				{
-					if (NvpFactory.TryCreateNVP(buf, 0, unusedBytes + readBytes, out lastIncompleteNvp, out endOfNvp))
+					if (NvpFactory.TryCreateNvp(buf, 0, unusedBytes + readBytes, out lastIncompleteNvp, out endOfNvp))
 					{
 						// We had enough bytes to create the nvp. Did we have enough for all of its contents too?
 						if (endOfNvp >= 0)
@@ -103,7 +105,7 @@ namespace FastCgiNet
 		{
 		}
 
-		NameValuePair currentNvp;
+		private NameValuePair currentNvp;
 		NameValuePair IEnumerator<NameValuePair>.Current
 		{
 			get
@@ -112,7 +114,7 @@ namespace FastCgiNet
 			}
 		}
 
-		public NameValuePairEnumerator(Stream s, int contentLength)
+		public NvpEnumerator(Stream s, long contentLength)
 		{
 			Contents = s;
 			ContentLength = contentLength;

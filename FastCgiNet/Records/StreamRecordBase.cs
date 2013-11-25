@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using FastCgiNet.Streams;
 
 namespace FastCgiNet
 {
@@ -8,7 +9,7 @@ namespace FastCgiNet
 	/// Stream records are records whose contents can be concatenated to form a stream of data. An empty stream record
 	/// signals the end of the stream.
 	/// </summary>
-	public abstract class StreamRecord : RecordBase, IDisposable
+	public abstract class StreamRecordBase : RecordBase, IDisposable
 	{
 		int addedContentLength;
 		int addedPaddingLength;
@@ -135,7 +136,7 @@ namespace FastCgiNet
 			if (obj == null)
 				return false;
 
-			var b = obj as StreamRecord;
+			var b = obj as StreamRecordBase;
 			if (b == null)
 				return false;
 
@@ -147,12 +148,12 @@ namespace FastCgiNet
 			return Contents.GetHashCode();
 		}
 
-		public StreamRecord(RecordType recordType, ushort requestId)
+		public StreamRecordBase(RecordType recordType, ushort requestId)
 			: base(recordType, requestId)
 		{
 		}
 
-		internal StreamRecord(RecordType recordType, byte[] data, int offset, int length, out int endOfRecord)
+		internal StreamRecordBase(RecordType recordType, byte[] data, int offset, int length, out int endOfRecord)
 			: base(data, offset, length, recordType)
 		{
 			if (ContentLength + PaddingLength == 0)

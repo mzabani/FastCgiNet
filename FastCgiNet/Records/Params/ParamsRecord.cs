@@ -2,10 +2,11 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using FastCgiNet.Streams;
 
 namespace FastCgiNet
 {
-	public class ParamsRecord : StreamRecord
+	public class ParamsRecord : StreamRecordBase
 	{
 		/// <summary>
 		/// Enumerates the parameters in this record.
@@ -18,7 +19,7 @@ namespace FastCgiNet
 				if (Contents != null)
 				{
 					Contents.Seek(0, SeekOrigin.Begin);
-					using (var paramsEnumerator = new NameValuePairEnumerator(Contents, ContentLength))
+					using (var paramsEnumerator = new NvpEnumerator(Contents, ContentLength))
 					{
 						while (paramsEnumerator.MoveNext())
 							yield return ((IEnumerator<NameValuePair>)paramsEnumerator).Current;

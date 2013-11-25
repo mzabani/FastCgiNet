@@ -6,6 +6,12 @@ namespace FastCgiNet
 {
 	public abstract class RecordBase
 	{
+        /// <summary>
+        /// The maximum content length of any record. When writing to a <seealso cref="FastCgiNet.Streams.RecordContentsStream"/> this limit is accounted for, throwing an exception if the writes exceed this limit.
+        /// </summary>
+        public static readonly int MaxContentLength = 65535;
+        internal static readonly int MaxPaddingLength = 255;
+
 		protected byte[] Header;
 
 		public byte Version {
@@ -85,7 +91,7 @@ namespace FastCgiNet
 		{
 			get
 			{
-				return RecordType == RecordType.FCGIStdout || RecordType == RecordType.FCGIStdin || RecordType == RecordType.FCGIStderr;
+                return this.RecordType.IsStreamType();
 			}
 		}
 

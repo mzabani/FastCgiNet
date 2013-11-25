@@ -22,7 +22,7 @@ namespace FastCgiNet.Tests
 
 				ParamsRecord builtRecord = null;
 
-				var byteReader = new ByteReader(new RecordFactory());
+				var byteReader = new RecordFactory();
 				foreach (var recData in paramsRec.GetBytes())
 				{
 					for (int i = 0; i < recData.Count; ++i)
@@ -53,7 +53,7 @@ namespace FastCgiNet.Tests
 
 			BeginRequestRecord builtRecord = null;
 			
-			var byteReader = new ByteReader(new RecordFactory());
+			var byteReader = new RecordFactory();
 			foreach (var recData in beginRec.GetBytes())
 				builtRecord = (BeginRequestRecord) byteReader.Read(recData).SingleOrDefault();
 			

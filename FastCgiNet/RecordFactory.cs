@@ -9,7 +9,7 @@ namespace FastCgiNet
 	/// </summary>
 	public class RecordFactory
 	{
-		private ILogger Logger;
+		//private ILogger Logger;
 
 		/// <summary>
 		/// Inside the Read loop situations may arise when we were left with less than 8 bytes to create a new record,
@@ -62,16 +62,16 @@ namespace FastCgiNet
 						Array.Copy(data.Array, data.Offset + bytesFed, ReceivedButUnusedBytes, NumUnusedBytes, bytesLeft);
 						NumUnusedBytes += bytesLeft;
 						
-						if (Logger != null)
-							Logger.Debug("Not enough bytes in the header ({0}) to create a record yet", NumUnusedBytes);
+						/*if (Logger != null)
+							Logger.Debug("Not enough bytes in the header ({0}) to create a record yet", NumUnusedBytes);*/
 
 						yield break;
 					}
 					else if (NumUnusedBytes > 0)
 					{
 						// We should use these bytes that haven't been fed yet
-						if (Logger != null)
-							Logger.Debug("Creating new record with {0} bytes still to be fed", NumUnusedBytes + bytesLeft);
+						/*if (Logger != null)
+							Logger.Debug("Creating new record with {0} bytes still to be fed", NumUnusedBytes + bytesLeft);*/
 
 						int neededForFullHeader = 8 - NumUnusedBytes;
 						Array.Copy(data.Array, data.Offset + bytesFed, ReceivedButUnusedBytes, NumUnusedBytes, neededForFullHeader);
@@ -82,16 +82,16 @@ namespace FastCgiNet
 					}
 					else
 					{
-						if (Logger != null)
-							Logger.Debug("Creating new record with {0} bytes still to be fed", bytesLeft);
+						/*if (Logger != null)
+							Logger.Debug("Creating new record with {0} bytes still to be fed", bytesLeft);*/
 
 						LastIncompleteRecord = CreateRecordFromHeader(data.Array, data.Offset + bytesFed, bytesLeft, out lastByteOfRecord);
 					}
 				}
 				else
 				{
-					if (Logger != null)
-						Logger.Debug("Feeding bytes into last incomplete record");
+					/*if (Logger != null)
+						Logger.Debug("Feeding bytes into last incomplete record");*/
 					
 					LastIncompleteRecord.FeedBytes(data.Array, data.Offset + bytesFed, bytesLeft, out lastByteOfRecord);
 				}
@@ -100,14 +100,14 @@ namespace FastCgiNet
 				// If it is incomplete, then we must have fed all bytes read, and as such we should return.
 				if (lastByteOfRecord == -1)
 				{
-					if (Logger != null)
-						Logger.Debug("Record is still incomplete.");
+					/*if (Logger != null)
+						Logger.Debug("Record is still incomplete.");*/
 
 					yield break;
 				}
 
-				if (Logger != null)
-					Logger.Debug("Record is complete. Setting last incomplete record to null");
+				/*if (Logger != null)
+					Logger.Debug("Record is complete. Setting last incomplete record to null");*/
 				RecordBase builtRecord = LastIncompleteRecord;
 				LastIncompleteRecord = null;
 				bytesFed = lastByteOfRecord + 1;
@@ -117,13 +117,14 @@ namespace FastCgiNet
 			}
 		}
 
+        /*
 		public void SetLogger(ILogger logger)
 		{
 			if (logger == null)
 				throw new ArgumentNullException("logger");
 
 			Logger = logger;
-		}
+		}*/
 
         #region Static methods
         /// <summary>
@@ -213,8 +214,7 @@ namespace FastCgiNet
 
 		public RecordFactory()
 		{
-			Logger = null;
+			//Logger = null;
 		}
 	}
 }
-

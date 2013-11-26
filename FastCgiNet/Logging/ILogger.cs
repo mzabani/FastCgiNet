@@ -2,6 +2,7 @@ using System;
 
 namespace FastCgiNet.Logging
 {
+    /*
 	/// <summary>
 	/// Implement this to be able to log internal errors and debug messages, among others.
 	/// </summary>
@@ -14,5 +15,5 @@ namespace FastCgiNet.Logging
 		void Error(Exception e, string msg, params object[] prms);
 		void Fatal(Exception e);
 		void Fatal(Exception e, string msg, params object[] prms);
-	}
+	}*/
 }

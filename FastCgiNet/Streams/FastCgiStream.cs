@@ -10,9 +10,24 @@ namespace FastCgiNet.Streams
         private long position;
 
         /// <summary>
-        /// When this stream is in Read Mode (see <see cref="ReadMode"/>), this property can be used to find out if the other party has finished writing this stream.
+        /// When this stream is in Read Mode (see <see cref="IsReadMode"/>), this property can be used to find out if the other party has finished writing this stream.
+        /// If this stream is not in Read Mode, this throws <seealso cref="System.InvalidOperationException"/>.
         /// </summary>
-        public bool Complete { get; internal set; }
+        public bool IsComplete
+        {
+            get
+            {
+                if (!IsReadMode)
+                    throw new InvalidOperationException("This stream is not in read mode");
+
+                return isComplete;
+            }
+            internal set
+            {
+                isComplete = value;
+            }
+        }
+        private bool isComplete;
 
         /// <summary>
         /// True when we are receiving records sent by the other party, false when we are to send data to the other party. Implementing streams must carefully define semantics
@@ -21,7 +36,7 @@ namespace FastCgiNet.Streams
         /// If it is not in Read Mode, then <see cref="Flush()"/> should send unsent data and <see cref="Close()"/> should flush
         /// and send an empty record indicating the end of the stream to the other communicating party.
         /// </summary>
-        public bool ReadMode { get; private set; }
+        public bool IsReadMode { get; private set; }
 
         protected LinkedList<RecordContentsStream> underlyingStreams;
         public IEnumerable<RecordContentsStream> UnderlyingStreams
@@ -32,18 +47,24 @@ namespace FastCgiNet.Streams
 			}
 		}
 
-        public void AppendStream(RecordContentsStream stream)
+        /// <summary>
+        /// This method is called internally when enough data has been written to this stream that a new <seealso cref="RecordContentsStream" /> must 
+        /// be created and appended to the internal list of underlying streams.
+        /// </summary>
+        public virtual void AppendStream(RecordContentsStream stream)
         {
             if (stream == null)
                 throw new ArgumentNullException("stream");
 
             underlyingStreams.AddLast(stream);
+            if (stream.Length == 0)
+                IsComplete = true;
         }
 
         protected RecordContentsStream lastUnfilledStream;
 		
-        /*/// <summary>
-		/// The last unfilled stream that contains part of the stream's contents. If this stream has length zero, then this stream
+        /// <summary>
+		/// The last unfilled stream that contains part of the stream's contents. If this RecordContentsStream has length zero, then this FastCgiStream
 		/// has never been written to.
 		/// </summary>
         public RecordContentsStream LastUnfilledStream
@@ -52,7 +73,7 @@ namespace FastCgiNet.Streams
 			{
 				return lastUnfilledStream;
 			}
-		}*/
+		}
         
 		#region Implemented abstract members of Stream
         public override int Read(byte[] buffer, int offset, int count)
@@ -115,6 +136,8 @@ namespace FastCgiNet.Streams
 		{
             if (position != Length)
                 throw new NotImplementedException("Still only able to write to the end of the stream");
+            else if (!CanWrite)
+                throw new InvalidOperationException("You can't write to this stream. You should either append a Record's Stream or initialize this stream with Read Mode = false");
 
 			int bytesCopied = 0;
 			while (bytesCopied != count)
@@ -133,9 +156,11 @@ namespace FastCgiNet.Streams
 				{
 					// New lastStream
 					lastUnfilledStream = new RecordContentsStream();
-					underlyingStreams.AddLast(lastUnfilledStream);
+                    AppendStream(lastUnfilledStream);
 				}
 			}
+
+            position += count;
 		}
 		public override bool CanRead
         {
@@ -155,7 +180,7 @@ namespace FastCgiNet.Streams
         {
 			get
             {
-                return true;
+                return !IsReadMode;
 			}
 		}
 		public override long Length
@@ -178,17 +203,18 @@ namespace FastCgiNet.Streams
 		}
 		#endregion
 
-        //TODO: Different constructors for when the other party is sending us records that will be appended to this stream
-        // (in this case Writes are forbidden)
-        // and for when we want to write for the other party to receive
-        // (in this case Writes are allowed, Flushing means sending unsent data, and Closing means sending everything + an empty record)
-
-		public FastCgiStream()
+        /// <summary>
+        /// Creates a stream to be used in a FastCgi Request. If this stream will hold data received by the other party, then set <paramref name="readMode" /> to <c>true</c>.
+        /// If you mean to write (send) data to the other communicating party, then set <paramref name="readMode"/> to <c>false</c>.
+        /// </summary>
+        /// <param name="readMode"><c>true</c> if you are using this stream to send data, <c>false</c> if you are receiving data.</param>
+		public FastCgiStream(bool readMode)
 		{
 			underlyingStreams = new LinkedList<RecordContentsStream>();
 			lastUnfilledStream = new RecordContentsStream();
 			underlyingStreams.AddLast(lastUnfilledStream);
             position = 0;
+            IsReadMode = readMode;
 		}
 	}
 }

@@ -134,7 +134,7 @@ namespace FastCgiNet
 				throw new InvalidOperationException("Can't do this operation. It would go out of the array's bounds");
 		}
 
-		public override bool Equals (object obj)
+		public override bool Equals(object obj)
 		{
 			if (obj == null)
 				return false;
@@ -147,7 +147,7 @@ namespace FastCgiNet
 			return RecordType == b.RecordType && RequestId == b.RequestId && ContentLength == b.ContentLength && Version == b.Version;
 		}
 
-		public override int GetHashCode ()
+		public override int GetHashCode()
 		{
 			//TODO: Do better than this
 			return base.GetHashCode ();

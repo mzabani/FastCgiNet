@@ -24,7 +24,7 @@ namespace FastCgiNet
 		public bool MoveNext()
 		{
             //TODO: Improve this implementation. Specifically, don't shift the buffer left every time. Keep a smaller buffer
-            // that is big enough to create a Nvp and use it like ByteReader does
+            // that is big enough to create a Nvp and use it like RecordFactory does
 			int readBytes;
 			while (true)
 			{

@@ -48,7 +48,6 @@
     <Compile Include="Streams\FastCgiStream.cs" />
     <Compile Include="Request\SocketRequest.cs" />
     <Compile Include="Request\SocketHelper.cs" />
-    <Compile Include="Request\Request.cs" />
     <Compile Include="Streams\NvpWriter.cs" />
     <Compile Include="Streams\NvpReader.cs" />
     <Compile Include="Records\Params\ParamsRecord.cs" />
@@ -60,6 +59,7 @@
     <Compile Include="Records\RecordType.cs" />
     <Compile Include="NvpEnumerator.cs" />
     <Compile Include="RecordFactory.cs" />
+    <Compile Include="Request\FastCgiRequest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

@@ -8,13 +8,16 @@ namespace FastCgiNet
 	/// This class represents a FastCgi request. It is only a common base class for real FastCgi requests running over a socket
     /// or a named pipe, or any other desired communication medium.
 	/// </summary>
-	public abstract class Request
+	public abstract class FastCgiRequest : IDisposable
 	{
-		public ushort RequestId { get; protected set; }
+		public ushort RequestId { get; private set; }
+        public Role Role { get; private set; }
+        public bool ApplicationMustCloseConnection { get; private set; }
 
         #region Streams
         public abstract FastCgiStream ParamsStream { get; }
 
+        /*
         /// <summary>
         /// Enumerates the parameters in <see cref="ParamsStream"/>.
         /// </summary>
@@ -29,18 +32,28 @@ namespace FastCgiNet
                         yield return ((IEnumerator<NameValuePair>)paramsEnumerator).Current;
                 }
             }
-        }
+        }*/
+
+
         public abstract FastCgiStream Stdin { get; }
         public abstract FastCgiStream Stdout { get; }
         public abstract FastCgiStream Stderr { get; }
         #endregion
+
+        public virtual void Dispose()
+        {
+            ParamsStream.Dispose();
+            Stdin.Dispose();
+            Stdout.Dispose();
+            Stderr.Dispose();
+        }
 
         //TODO: AddReceivedRecord and SetBeginRequest?
 
         /// <summary>
         /// When a record is sent by the other side, use this method to update the streams in this request.
         /// </summary>
-        public void AddReceivedRecord(RecordBase rec)
+        protected void AddReceivedRecord(RecordBase rec)
         {
             if (rec == null)
                 throw new ArgumentNullException("rec");
@@ -67,12 +80,14 @@ namespace FastCgiNet
 		/// will be preserved until this object's disposal.
 		/// </summary>
 		/// <param name="rec">The BeginRequest record.</param> 
-		public void SetBeginRequest(BeginRequestRecord rec)
+		public virtual void SetBeginRequest(BeginRequestRecord rec)
 		{
 			if (rec == null)
 				throw new ArgumentNullException("rec");
 
 			RequestId = rec.RequestId;
+            Role = rec.Role;
+            ApplicationMustCloseConnection = rec.ApplicationMustCloseConnection;
 		}
 
 		public override int GetHashCode()

@@ -3,6 +3,7 @@ using FastCgiNet.Logging;
 
 namespace FastCgiNet.Logging
 {
+    /*
 	/// <summary>
 	/// This logger prints Debug and Info messages to Stderr. Everything else is simply ignored.
 	/// </summary>
@@ -33,4 +34,5 @@ namespace FastCgiNet.Logging
 		{
 		}
 	}
+    */   
 }

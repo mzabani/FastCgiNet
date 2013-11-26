@@ -8,11 +8,17 @@ namespace FastCgiNet
 	public delegate void SocketClosed();
 
 	/// <summary>
-	/// This class represents a FastCgi request running over a socket.
+	/// This class represents a FastCgi Request running over a socket. It provides easy ways to read data sent from the other party
+    /// and to send data too.
 	/// </summary>
-	public class SocketRequest : Request
+	public class SocketRequest : FastCgiRequest, IDisposable
 	{
 		public Socket Socket { get; private set; }
+
+        /// <summary>
+        /// Indicates if we are on the webserver side of the request or on the application side.
+        /// </summary>
+        private bool WebServer;
 
         #region Streams
         private SocketStream paramsStream;
@@ -22,7 +28,7 @@ namespace FastCgiNet
             {
                 if (paramsStream == null)
                 {
-                    paramsStream = new SocketStream(this, RecordType.FCGIParams);
+                    paramsStream = new SocketStream(Socket, RecordType.FCGIParams, !WebServer);
                 }
                 
                 return paramsStream;
@@ -35,7 +41,7 @@ namespace FastCgiNet
             {
                 if (stdin == null)
                 {
-                    stdin = new SocketStream(this, RecordType.FCGIStdin);
+                    stdin = new SocketStream(Socket, RecordType.FCGIStdin, !WebServer);
                 }
 
                 return stdin;
@@ -48,7 +54,7 @@ namespace FastCgiNet
             {
                 if (stdout == null)
                 {
-                    stdout = new SocketStream(this, RecordType.FCGIStdout);
+                    stdout = new SocketStream(Socket, RecordType.FCGIStdout, WebServer);
                 }
                 
                 return stdout;
@@ -61,13 +67,22 @@ namespace FastCgiNet
             {
                 if (stderr == null)
                 {
-                    stderr = new SocketStream(this, RecordType.FCGIStderr);
+                    stderr = new SocketStream(Socket, RecordType.FCGIStderr, WebServer);
                 }
                 
                 return stderr;
             }
         }
         #endregion
+
+        public override void SetBeginRequest(BeginRequestRecord rec)
+        {
+            base.SetBeginRequest(rec);
+            ((SocketStream)ParamsStream).RequestId = RequestId;
+            ((SocketStream)Stdin).RequestId = RequestId;
+            ((SocketStream)Stdout).RequestId = RequestId;
+            ((SocketStream)Stderr).RequestId = RequestId;
+        }
 
 		/// <summary>
 		/// Warns when the socket for this request was closed by our side because <see cref="CloseSocket()"/> was called.
@@ -135,6 +150,12 @@ namespace FastCgiNet
 			return false;
 		}
 
+        public override void Dispose()
+        {
+            CloseSocket();
+            base.Dispose();
+        }
+
 		public override int GetHashCode()
 		{
 			// A request is uniquely identified by its socket and its requestid.
@@ -154,16 +175,17 @@ namespace FastCgiNet
 		}
 
 		#region Constructors
-		public SocketRequest(Socket s)
+		public SocketRequest(Socket s, bool webServer)
 		{
 			if (s == null)
 				throw new ArgumentNullException("s");
 			
 			this.Socket = s;
+            WebServer = webServer;
 		}
 
-		public SocketRequest(Socket s, BeginRequestRecord beginRequestRecord)
-			: this(s)
+		public SocketRequest(Socket s, BeginRequestRecord beginRequestRecord, bool webServer)
+			: this(s, webServer)
 		{
 			SetBeginRequest(beginRequestRecord);
  		}

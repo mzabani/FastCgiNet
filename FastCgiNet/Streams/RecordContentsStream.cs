@@ -91,7 +91,7 @@ namespace FastCgiNet.Streams
 			return position;
 		}
 
-		public override void SetLength (long value)
+		public override void SetLength(long value)
 		{
 			throw new NotSupportedException();
 		}
@@ -99,7 +99,7 @@ namespace FastCgiNet.Streams
 		/// <summary>
 		/// Writes to this stream, effectively copying bytes from <paramref name="buffer"/> to internal buffers.
 		/// </summary>
-		public override void Write (byte[] buffer, int offset, int count)
+		public override void Write(byte[] buffer, int offset, int count)
 		{
 			//TODO: Alloc buffers respecting a fixed size, and reuse them in case we don't fill them up. Is it worth it?
 			//TODO: Proper Write in positions other than the end of the stream

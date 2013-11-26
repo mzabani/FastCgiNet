@@ -10,14 +10,15 @@ namespace FastCgiNet
 		public int ValueLength { get; private set; }
 
 		private int nameAndValueLengthSoFar = 0;
-		private byte[] name;
-		private byte[] value;
+		private byte[] nameBytes;
+		private byte[] valueBytes;
 		public string Name
 		{
 			get
 			{
+                //TODO: Use ASCIIEncoding
 				var x = new StringBuilder(NameLength);
-				foreach (byte b in name)
+				foreach (byte b in nameBytes)
 					x.Append((char)b);
 
 				return x.ToString();
@@ -27,8 +28,9 @@ namespace FastCgiNet
 		{
 			get
 			{
+                //TODO: Use ASCIIEncoding
 				var x = new StringBuilder(ValueLength);
-				foreach (byte b in value)
+				foreach (byte b in valueBytes)
 				{
 					x.Append((char)b);
 				}
@@ -67,8 +69,8 @@ namespace FastCgiNet
 			yield return new ArraySegment<byte>(GetHeaderBytes(ValueLength));
 
 			// Just return the name and value now, simple!
-			yield return new ArraySegment<byte>(name);
-			yield return new ArraySegment<byte>(value);
+			yield return new ArraySegment<byte>(nameBytes);
+			yield return new ArraySegment<byte>(valueBytes);
 		}
 
 		internal void FeedBytes (byte[] nameOrValueData, int offset, int length, out int lastByteOfNameValuePair) {
@@ -90,19 +92,19 @@ namespace FastCgiNet
 			// Now fill the Name and Value arrays
 			if (nameAndValueLengthSoFar >= NameLength)
 			{
-				Array.Copy(nameOrValueData, offset, value, nameAndValueLengthSoFar - NameLength, length);
+				Array.Copy(nameOrValueData, offset, valueBytes, nameAndValueLengthSoFar - NameLength, length);
 				nameAndValueLengthSoFar += length;
 			}
 			else if (length <= NameLength - nameAndValueLengthSoFar)
 			{
-				Array.Copy(nameOrValueData, offset, name, nameAndValueLengthSoFar, length);
+				Array.Copy(nameOrValueData, offset, nameBytes, nameAndValueLengthSoFar, length);
 				nameAndValueLengthSoFar += length;
 			}
 			else
 			{
 				int lengthLeftForName = NameLength - nameAndValueLengthSoFar;
-				Array.Copy(nameOrValueData, offset, name, nameAndValueLengthSoFar, lengthLeftForName);
-				Array.Copy(nameOrValueData, offset + lengthLeftForName, value,  0, length - lengthLeftForName);
+				Array.Copy(nameOrValueData, offset, nameBytes, nameAndValueLengthSoFar, lengthLeftForName);
+				Array.Copy(nameOrValueData, offset + lengthLeftForName, valueBytes,  0, length - lengthLeftForName);
 				nameAndValueLengthSoFar += length;
 			}
 
@@ -111,15 +113,20 @@ namespace FastCgiNet
 		}
 
 		/// <summary>
-		/// Creates a name value pair with name <paramref name="key"/> and value <paramref name="value"/>.
+		/// Creates a name value pair with name <paramref name="name"/> and value <paramref name="value"/>.
 		/// Make sure both strings can be ASCII encoded.
 		/// </summary>
-		public NameValuePair(string key, string val)
+		public NameValuePair(string name, string val)
 		{
-			name = ASCIIEncoding.ASCII.GetBytes(key);
-			value = ASCIIEncoding.ASCII.GetBytes(val);
-			NameLength = name.Length;
-			ValueLength = value.Length;
+            if (name == null)
+                throw new ArgumentNullException("name");
+            else if (val == null)
+                throw new ArgumentNullException("val");
+
+			nameBytes = ASCIIEncoding.ASCII.GetBytes(name);
+			valueBytes = ASCIIEncoding.ASCII.GetBytes(val);
+			NameLength = nameBytes.Length;
+			ValueLength = valueBytes.Length;
 			nameAndValueLengthSoFar = NameLength + ValueLength;
 		}
 
@@ -127,8 +134,8 @@ namespace FastCgiNet
 		{
 			NameLength = nameLength;
 			ValueLength = valueLength;
-			name = new byte[nameLength];
-			value = new byte[valueLength];
+			nameBytes = new byte[nameLength];
+			valueBytes = new byte[valueLength];
 		}
 	}
 }

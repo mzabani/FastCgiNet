@@ -51,7 +51,7 @@ namespace FastCgiNet.Tests
 			
 			int lastByteIdx;
 			NameValuePair nvp;
-			bool createdNvp = NvpFactory.TryCreateNVP(data, offset, 100 - offset, out nvp, out lastByteIdx);
+			bool createdNvp = NvpFactory.TryCreateNvp(data, offset, 100 - offset, out nvp, out lastByteIdx);
 			
 			Assert.AreEqual(true, createdNvp);
 			

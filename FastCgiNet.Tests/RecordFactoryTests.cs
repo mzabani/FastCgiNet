@@ -7,11 +7,8 @@ using FastCgiNet;
 namespace FastCgiNet.Tests
 {
 	[TestFixture]
-	public class ByteReaderTests
+	public class RecordFactoryTests
 	{
-		//TODO: Stress test the byte reader. Pass in less than 8 bytes, wait a while, pass the remaining bytes.
-		// Do all sorts of nasty combinations of byte passing.
-
 		[Test]
 		public void ParamsRecordManyParametersByteByByte() {
 			int numParams = 100;

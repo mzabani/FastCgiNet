@@ -7,10 +7,10 @@ using FastCgiNet;
 namespace FastCgiNet.Tests
 {
 	[TestFixture]
-	public class Record
+    public class ParamsRecordTests
 	{
 		[Test]
-		public void ParamsRecordOneParameter() {
+		public void CreateAndReadParamsWithOneParameter() {
 			using (var paramsRec = new ParamsRecord(1))
 			{
 				paramsRec.Add("TEST", "WHATEVER");
@@ -35,7 +35,7 @@ namespace FastCgiNet.Tests
 		}
 
 		[Test]
-		public void ParamsRecordManyParameters() {
+        public void CreateAndReadParamsWithManyParameter() {
 			int numParams = 100;
 			using (var paramsRec = new ParamsRecord(1))
 			{

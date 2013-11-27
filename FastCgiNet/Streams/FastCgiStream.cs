@@ -39,7 +39,7 @@ namespace FastCgiNet.Streams
         public bool IsReadMode { get; private set; }
 
         protected LinkedList<RecordContentsStream> underlyingStreams;
-        public IEnumerable<RecordContentsStream> UnderlyingStreams
+        internal IEnumerable<RecordContentsStream> UnderlyingStreams
 		{
 			get
 			{
@@ -56,24 +56,18 @@ namespace FastCgiNet.Streams
             if (stream == null)
                 throw new ArgumentNullException("stream");
 
-            underlyingStreams.AddLast(stream);
-            if (stream.Length == 0)
+            if (stream.Length == 0 && IsReadMode && underlyingStreams.Count > 0)
                 IsComplete = true;
+
+            LastUnfilledStream = stream;
+            underlyingStreams.AddLast(stream);
         }
 
-        protected RecordContentsStream lastUnfilledStream;
-		
         /// <summary>
 		/// The last unfilled stream that contains part of the stream's contents. If this RecordContentsStream has length zero, then this FastCgiStream
 		/// has never been written to.
 		/// </summary>
-        public RecordContentsStream LastUnfilledStream
-		{
-			get
-			{
-				return lastUnfilledStream;
-			}
-		}
+        public RecordContentsStream LastUnfilledStream { get; set; }
         
 		#region Implemented abstract members of Stream
         public override int Read(byte[] buffer, int offset, int count)
@@ -142,21 +136,20 @@ namespace FastCgiNet.Streams
 			int bytesCopied = 0;
 			while (bytesCopied != count)
 			{
-				int bytesToCopy = RecordBase.MaxContentLength - (int)lastUnfilledStream.Length;
+				int bytesToCopy = RecordBase.MaxContentLength - (int)LastUnfilledStream.Length;
 				if (bytesToCopy > count - bytesCopied)
 					bytesToCopy = count - bytesCopied;
 
 				if (bytesToCopy > 0)
 				{
-					lastUnfilledStream.Write(buffer, offset + bytesCopied, bytesToCopy);
+					LastUnfilledStream.Write(buffer, offset + bytesCopied, bytesToCopy);
 					bytesCopied += bytesToCopy;
 				}
 
-				if (lastUnfilledStream.Length == RecordBase.MaxContentLength && bytesCopied < count)
+				if (LastUnfilledStream.Length == RecordBase.MaxContentLength)
 				{
 					// New lastStream
-					lastUnfilledStream = new RecordContentsStream();
-                    AppendStream(lastUnfilledStream);
+                    AppendStream(new RecordContentsStream());
 				}
 			}
 
@@ -211,8 +204,7 @@ namespace FastCgiNet.Streams
 		public FastCgiStream(bool readMode)
 		{
 			underlyingStreams = new LinkedList<RecordContentsStream>();
-			lastUnfilledStream = new RecordContentsStream();
-			underlyingStreams.AddLast(lastUnfilledStream);
+            AppendStream(new RecordContentsStream());
             position = 0;
             IsReadMode = readMode;
 		}

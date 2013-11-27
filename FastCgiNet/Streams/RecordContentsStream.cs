@@ -101,7 +101,6 @@ namespace FastCgiNet.Streams
 		/// </summary>
 		public override void Write(byte[] buffer, int offset, int count)
 		{
-			//TODO: Alloc buffers respecting a fixed size, and reuse them in case we don't fill them up. Is it worth it?
 			//TODO: Proper Write in positions other than the end of the stream
 			if (position != length)
 				throw new NotImplementedException("At the moment, only writing at the end of the stream is supported");
@@ -114,38 +113,43 @@ namespace FastCgiNet.Streams
 
 			// Check that we didn't go over the size limit
 			if (length > RecordBase.MaxContentLength)
-				throw new InvalidOperationException("You can't write more than " + RecordBase.MaxContentLength + " bytes to a record's content");
+				throw new InvalidOperationException("You can't write more than " + RecordBase.MaxContentLength + " bytes to a record's contents");
 		}
 
-		public override bool CanRead {
+		public override bool CanRead
+        {
 			get
 			{
 				return true;
 			}
 		}
 
-		public override bool CanSeek {
+		public override bool CanSeek
+        {
 			get
 			{
 				return true;
 			}
 		}
 
-		public override bool CanWrite {
+		public override bool CanWrite
+        {
 			get
 			{
 				return true;
 			}
 		}
 
-		public override long Length {
+		public override long Length
+        {
 			get
 			{
 				return length;
 			}
 		}
 
-		public override long Position {
+		public override long Position
+        {
 			get
 			{
 				return position;
@@ -186,12 +190,12 @@ namespace FastCgiNet.Streams
 			return true;
 		}
 
-		public override int GetHashCode ()
+		public override int GetHashCode()
 		{
 			return length + 31 * MemoryBlocks.Sum(mb => mb.GetHashCode());
 		}
 
-		public RecordContentsStream ()
+		public RecordContentsStream()
 		{
 			MemoryBlocks = new LinkedList<byte[]>();
 			length = 0;

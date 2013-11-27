@@ -14,7 +14,8 @@ namespace FastCgiNet
 
 		protected byte[] Header;
 
-		public byte Version {
+		public byte Version
+        {
 			get
 			{
 				return Header[0];
@@ -24,7 +25,8 @@ namespace FastCgiNet
 				Header[0] = value;
 			}
 		}
-		public RecordType RecordType {
+		public RecordType RecordType
+        {
 			get
 			{
 				return (RecordType)Header[1];
@@ -58,7 +60,8 @@ namespace FastCgiNet
 				Header[5] = (byte)(value & byte.MaxValue);
 			}
 		}
-		public byte PaddingLength {
+		public byte PaddingLength
+        {
 			get
 			{
 				return Header[6];
@@ -68,7 +71,8 @@ namespace FastCgiNet
 				Header[6] = value;
 			}
 		}
-		public byte Reserved {
+		public byte Reserved
+        {
 			get
 			{
 				return Header[7];
@@ -117,7 +121,8 @@ namespace FastCgiNet
 		/// Do not modify these byte arrays as they may be the byte arrays that form the underlying stream.
 		/// </summary>
 		/// <remarks>The first ArraySegment enumerated is guaranteed to be the header of the record, being therefore 8 bytes long.</remarks>
-		public abstract IEnumerable<ArraySegment<byte>> GetBytes();
+		//public abstract IEnumerable<ArraySegment<byte>> GetBytes();
+        public abstract IEnumerable<ArraySegment<byte>> GetBytes();
 		
 		/// <summary>
 		/// When more bytes that belong to this record have been received, feed them with this method, which will

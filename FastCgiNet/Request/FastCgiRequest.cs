@@ -5,36 +5,17 @@ using FastCgiNet.Streams;
 namespace FastCgiNet
 {
 	/// <summary>
-	/// This class represents a FastCgi request. It is only a common base class for real FastCgi requests running over a socket
+	/// This class represents a FastCgi request. It serves as a common base class for real FastCgi requests running over a socket
     /// or a named pipe, or any other desired communication medium.
 	/// </summary>
 	public abstract class FastCgiRequest : IDisposable
 	{
-		public ushort RequestId { get; private set; }
-        public Role Role { get; private set; }
-        public bool ApplicationMustCloseConnection { get; private set; }
+		public ushort RequestId { get; protected set; }
+        public Role Role { get; protected set; }
+        public bool ApplicationMustCloseConnection { get; protected set; }
 
         #region Streams
         public abstract FastCgiStream ParamsStream { get; }
-
-        /*
-        /// <summary>
-        /// Enumerates the parameters in <see cref="ParamsStream"/>.
-        /// </summary>
-        /// <remarks>Enumerating the parameters will advance <see cref="ParamsStream"/>.</remarks>
-        public IEnumerable<NameValuePair> Params
-        {
-            get
-            {
-                using (var paramsEnumerator = new NvpEnumerator(ParamsStream, ParamsStream.Length))
-                {
-                    while (paramsEnumerator.MoveNext())
-                        yield return ((IEnumerator<NameValuePair>)paramsEnumerator).Current;
-                }
-            }
-        }*/
-
-
         public abstract FastCgiStream Stdin { get; }
         public abstract FastCgiStream Stdout { get; }
         public abstract FastCgiStream Stderr { get; }
@@ -48,18 +29,22 @@ namespace FastCgiNet
             Stderr.Dispose();
         }
 
-        //TODO: AddReceivedRecord and SetBeginRequest?
-
         /// <summary>
         /// When a record is sent by the other side, use this method to update the streams in this request.
         /// </summary>
-        protected void AddReceivedRecord(RecordBase rec)
+        public virtual void AddReceivedRecord(RecordBase rec)
         {
             if (rec == null)
                 throw new ArgumentNullException("rec");
 
             switch (rec.RecordType)
             {
+                case RecordType.FCGIBeginRequest:
+                    RequestId = ((BeginRequestRecord)rec).RequestId;
+                    Role  = ((BeginRequestRecord)rec).Role;
+                    ApplicationMustCloseConnection = ((BeginRequestRecord)rec).ApplicationMustCloseConnection;
+                    break;
+
                 case RecordType.FCGIParams:
                     ParamsStream.AppendStream(((StreamRecordBase)rec).Contents);
                     break;
@@ -75,21 +60,6 @@ namespace FastCgiNet
             }
         }
 
-		/// <summary>
-		/// Sets some basic properties of this request such as its <see cref="RequestId"/>. After this, this object's identity
-		/// will be preserved until this object's disposal.
-		/// </summary>
-		/// <param name="rec">The BeginRequest record.</param> 
-		public virtual void SetBeginRequest(BeginRequestRecord rec)
-		{
-			if (rec == null)
-				throw new ArgumentNullException("rec");
-
-			RequestId = rec.RequestId;
-            Role = rec.Role;
-            ApplicationMustCloseConnection = rec.ApplicationMustCloseConnection;
-		}
-
 		public override int GetHashCode()
 		{
 			// A request is uniquely identified by its requestid.
@@ -101,7 +71,7 @@ namespace FastCgiNet
 			if (obj == null)
 				return false;
 
-			var b = obj as SocketRequest;
+			var b = obj as ApplicationSocketRequest;
 			if (b == null)
 				return false;
 

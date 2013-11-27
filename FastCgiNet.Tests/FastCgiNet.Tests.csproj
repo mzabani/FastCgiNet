@@ -36,20 +36,24 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RecordContentStream.cs" />
-    <Compile Include="Record.cs" />
     <Compile Include="EndOfRecord.cs" />
     <Compile Include="GetBytesFromRecord.cs" />
     <Compile Include="StaticHelper.cs" />
     <Compile Include="ByteUtils.cs" />
-    <Compile Include="BeginRequestRecordTests.cs" />
-    <Compile Include="ByteReaderTests.cs" />
     <Compile Include="Logging\DebugLogger.cs" />
-    <Compile Include="RecordBaseTests.cs" />
     <Compile Include="NvpFactoryTests.cs" />
     <Compile Include="Streams\FastCgiStreamImpl.cs" />
     <Compile Include="Streams\FastCgiStreamReadMode.cs" />
     <Compile Include="Streams\FastCgiStreamWriteMode.cs" />
+    <Compile Include="Streams\RecordContentStream.cs" />
+    <Compile Include="RecordFactoryTests.cs" />
+    <Compile Include="Requests\SocketRequestTests.cs" />
+    <Compile Include="Records\BeginRequestRecordTests.cs" />
+    <Compile Include="Records\RecordBaseTests.cs" />
+    <Compile Include="Records\EndRequestRecordTests.cs" />
+    <Compile Include="Streams\SocketStreamTests.cs" />
+    <Compile Include="Records\ParamsRecordTests.cs" />
+    <Compile Include="Records\StreamRecordTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -61,5 +65,7 @@
   <ItemGroup>
     <Folder Include="Logging\" />
     <Folder Include="Streams\" />
+    <Folder Include="Requests\" />
+    <Folder Include="Records\" />
   </ItemGroup>
 </Project>

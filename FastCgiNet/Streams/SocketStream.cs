@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace FastCgiNet.Streams
 {
-    public class SocketStream : FastCgiStream
+    public class SocketStream : FastCgiStream, IDisposable
     {
         private Socket Socket;
 
@@ -20,15 +20,28 @@ namespace FastCgiNet.Streams
 
         private void Send(RecordBase rec)
         {
+            try
+            {
             foreach (var seg in rec.GetBytes())
                 Socket.Send(seg.Array, seg.Offset, seg.Count, SocketFlags.None);
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
+        /// <summary>
+        /// Sends all written data that has not been sent over the socket. If nothing has been written to the stream
+        /// or everything has already been flushed, this method does not throw and does not send anything through the socket.
+        /// If this stream is in read mode or has been closed or disposed, this method throws.
+        /// </summary>
         public override void Flush()
         {
-            // If we are in read mode or if this has already been disposed, don't send anything at all!
-            if (IsReadMode || IsDisposed)
-                return;
+            if (IsDisposed)
+                throw new ObjectDisposedException("SocketStream");
+            if (IsReadMode)
+                throw new InvalidOperationException("Can't flush a SocketStream that is in Read Mode");
 
             IEnumerator<RecordContentsStream> it = UnderlyingStreams.GetEnumerator();
             try
@@ -49,7 +62,7 @@ namespace FastCgiNet.Streams
                     // We have to make sure that the current stream is not empty,
                     // because that would mean us sending an empty record here, when it should only happen in Close()
                     if (it.Current.Length == 0)
-                        break;
+                        continue;
 
                     using (var record = (StreamRecordBase)RecordFactory.CreateRecord(RequestId, RecordType))
                     {
@@ -65,19 +78,31 @@ namespace FastCgiNet.Streams
             }
 
             // Internal bookkeeping
-            LastFlushedStream = lastUnfilledStream;
+            LastFlushedStream = LastUnfilledStream;
             var newLastStream = new RecordContentsStream();
             underlyingStreams.AddLast(newLastStream);
-            lastUnfilledStream = newLastStream;
+            LastUnfilledStream = newLastStream;
         }
 
+        /// <summary>
+        /// Flushes this stream (<see cref="Flush()"/>) and disposes it. If no data has been flushed, this method does nothing else. If some data was flushed,
+        /// then this method flushes the remaining data and also sends an empty record through the socket, meaning end of stream to the other communicating party.
+        /// If the stream is in read mode, this method does nothing.
+        /// If this stream has already been disposed, this method does nothing, but does not throw either.
+        /// This method never closes the underlying socket.
+        /// </summary>
         public override void Close()
         {
+            if (IsDisposed)
+                return;
+
             // If this stream is empty, don't bother wasting network resources with an empty record
             // Or if this is in Read Mode, then we just don't send anything at all!
-            // Or if this has already been disposed, don't do anything either!
-            if (Length == 0 || IsReadMode || IsDisposed)
+            if (Length == 0 || IsReadMode)
+            {
+                IsDisposed = true;
                 return;
+            }
 
             // Flush and send an empty record!
             this.Flush();
@@ -85,15 +110,16 @@ namespace FastCgiNet.Streams
             {
                 Send(emptyRecord);
             }
-
-            base.Close();
+            IsDisposed = true;
         }
 
         private bool IsDisposed;
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-            IsDisposed = true;
+            if (IsDisposed)
+                return;
+
+            this.Close();
         }
 
         public SocketStream(Socket sock, RecordType streamType, bool readMode)
@@ -106,6 +132,7 @@ namespace FastCgiNet.Streams
 
             Socket = sock;
             RecordType = streamType;
+            IsDisposed = false;
             LastFlushedStream = null;
         }
     }

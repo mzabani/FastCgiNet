@@ -8,17 +8,12 @@ namespace FastCgiNet
 	public delegate void SocketClosed();
 
 	/// <summary>
-	/// This class represents a FastCgi Request running over a socket. It provides easy ways to read data sent from the other party
+	/// This class represents a FastCgi Request running over a socket, from the point of view of the FastCgi application (not the webserver). It provides easy ways to read data sent from the webserver
     /// and to send data too.
 	/// </summary>
-	public class SocketRequest : FastCgiRequest, IDisposable
+	public class ApplicationSocketRequest : FastCgiRequest
 	{
-		public Socket Socket { get; private set; }
-
-        /// <summary>
-        /// Indicates if we are on the webserver side of the request or on the application side.
-        /// </summary>
-        private bool WebServer;
+		protected Socket Socket { get; private set; }
 
         #region Streams
         private SocketStream paramsStream;
@@ -28,7 +23,7 @@ namespace FastCgiNet
             {
                 if (paramsStream == null)
                 {
-                    paramsStream = new SocketStream(Socket, RecordType.FCGIParams, !WebServer);
+                    paramsStream = new SocketStream(Socket, RecordType.FCGIParams, true);
                 }
                 
                 return paramsStream;
@@ -41,7 +36,7 @@ namespace FastCgiNet
             {
                 if (stdin == null)
                 {
-                    stdin = new SocketStream(Socket, RecordType.FCGIStdin, !WebServer);
+                    stdin = new SocketStream(Socket, RecordType.FCGIStdin, true);
                 }
 
                 return stdin;
@@ -54,7 +49,7 @@ namespace FastCgiNet
             {
                 if (stdout == null)
                 {
-                    stdout = new SocketStream(Socket, RecordType.FCGIStdout, WebServer);
+                    stdout = new SocketStream(Socket, RecordType.FCGIStdout, false);
                 }
                 
                 return stdout;
@@ -67,7 +62,7 @@ namespace FastCgiNet
             {
                 if (stderr == null)
                 {
-                    stderr = new SocketStream(Socket, RecordType.FCGIStderr, WebServer);
+                    stderr = new SocketStream(Socket, RecordType.FCGIStderr, false);
                 }
                 
                 return stderr;
@@ -75,13 +70,27 @@ namespace FastCgiNet
         }
         #endregion
 
-        public override void SetBeginRequest(BeginRequestRecord rec)
+        public void SendEndRequest(int appStatus, ProtocolStatus protocolStatus)
         {
-            base.SetBeginRequest(rec);
-            ((SocketStream)ParamsStream).RequestId = RequestId;
-            ((SocketStream)Stdin).RequestId = RequestId;
-            ((SocketStream)Stdout).RequestId = RequestId;
-            ((SocketStream)Stderr).RequestId = RequestId;
+            var rec = new EndRequestRecord(RequestId);
+            rec.AppStatus = appStatus;
+            rec.ProtocolStatus = protocolStatus;
+
+            Send(rec);
+        }
+
+        public override void AddReceivedRecord(RecordBase rec)
+        {
+            base.AddReceivedRecord(rec);
+
+            var beginRequestRec = rec as BeginRequestRecord;
+            if (beginRequestRec == null)
+                return;
+
+            ((SocketStream)ParamsStream).RequestId = beginRequestRec.RequestId;
+            ((SocketStream)Stdin).RequestId = beginRequestRec.RequestId;
+            ((SocketStream)Stdout).RequestId = beginRequestRec.RequestId;
+            ((SocketStream)Stderr).RequestId = beginRequestRec.RequestId;
         }
 
 		/// <summary>
@@ -94,7 +103,7 @@ namespace FastCgiNet
 		/// </summary>
 		/// <returns>True if the record was sent successfuly, false if the socket was closed or in the process of being closed.</returns>
 		/// <remarks>If the connection was open but the record couldn't be sent for some reason, an exception is thrown. The caller should check for all possibilities because remote connection ending is not uncommon at all.</remarks>
-		public bool Send(RecordBase rec)
+		public virtual bool Send(RecordBase rec)
 		{
 			if (rec == null)
 				throw new ArgumentNullException("rec");
@@ -129,10 +138,15 @@ namespace FastCgiNet
 		/// </summary>
 		/// <returns>True if the connection has been successfuly closed, false if it was already closed or in the process of being closed.</returns>
 		/// <remarks>If the connection was open but couldn't be closed for some reason, an exception is thrown. The caller should check for all possibilities because remote connection ending is not uncommon at all.</remarks>
-		public bool CloseSocket()
+		public virtual bool CloseSocket()
 		{
+            // If the socket has already been closed, just return false
+            if (!Socket.Connected)
+                return false;
+
 			try
 			{
+                //Socket.Shutdown(SocketShutdown.Receive);
 				Socket.Close();
 				Socket.Dispose();
 				OnSocketClose();
@@ -152,7 +166,8 @@ namespace FastCgiNet
 
         public override void Dispose()
         {
-            CloseSocket();
+            CloseSocket(); // Just to signal OnSocketClose
+            Socket.Dispose();
             base.Dispose();
         }
 
@@ -167,7 +182,7 @@ namespace FastCgiNet
 			if (obj == null)
 				return false;
 
-			var b = obj as SocketRequest;
+			var b = obj as ApplicationSocketRequest;
 			if (b == null)
 				return false;
 
@@ -175,19 +190,18 @@ namespace FastCgiNet
 		}
 
 		#region Constructors
-		public SocketRequest(Socket s, bool webServer)
+		public ApplicationSocketRequest(Socket s)
 		{
 			if (s == null)
 				throw new ArgumentNullException("s");
 			
 			this.Socket = s;
-            WebServer = webServer;
 		}
 
-		public SocketRequest(Socket s, BeginRequestRecord beginRequestRecord, bool webServer)
-			: this(s, webServer)
+		public ApplicationSocketRequest(Socket s, BeginRequestRecord beginRequestRecord)
+			: this(s)
 		{
-			SetBeginRequest(beginRequestRecord);
+			AddReceivedRecord(beginRequestRecord);
  		}
 		#endregion
 	}

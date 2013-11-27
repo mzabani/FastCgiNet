@@ -46,7 +46,6 @@
     <Compile Include="Records\StreamRecordBase.cs" />
     <Compile Include="Streams\SocketStream.cs" />
     <Compile Include="Streams\FastCgiStream.cs" />
-    <Compile Include="Request\SocketRequest.cs" />
     <Compile Include="Request\SocketHelper.cs" />
     <Compile Include="Streams\NvpWriter.cs" />
     <Compile Include="Streams\NvpReader.cs" />
@@ -60,6 +59,8 @@
     <Compile Include="NvpEnumerator.cs" />
     <Compile Include="RecordFactory.cs" />
     <Compile Include="Request\FastCgiRequest.cs" />
+    <Compile Include="Request\ApplicationSocketRequest.cs" />
+    <Compile Include="Request\WebServerSocketRequest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

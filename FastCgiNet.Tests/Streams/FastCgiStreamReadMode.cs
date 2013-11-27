@@ -9,6 +9,31 @@ namespace FastCgiNet.Tests
 	[TestFixture]
     public class FastCgiStreamReadMode
 	{
+        [Test]
+        public void BasicProperties()
+        {
+            using (var s = new FastCgiStreamImpl(true))
+            {
+                byte[] buf = new byte[1];
+                Assert.IsTrue(s.IsReadMode);
+                Assert.IsFalse(s.IsComplete);
+                Assert.IsFalse(s.CanWrite);
+                Assert.IsTrue(s.CanRead);
+                Assert.IsTrue(s.CanSeek);
+                Assert.Throws<InvalidOperationException>(() => s.Write(buf, 0, buf.Length));
+            }
+        }
+
+        [Test]
+        public void ReceiveEmptyRecordIsComplete()
+        {
+            using (var s = new FastCgiStreamImpl(true))
+            {
+                s.AppendStream(new RecordContentsStream());
+                Assert.IsTrue(s.IsComplete);
+            }
+        }
+
 		[Test]
 		public void ReadCheckOneStreamOneByteOffsetDifferentThanZero()
 		{

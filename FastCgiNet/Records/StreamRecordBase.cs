@@ -14,10 +14,6 @@ namespace FastCgiNet
 		int addedContentLength;
 		int addedPaddingLength;
 
-		// Perhaps streams should not be available in a StreamRecord, nor adding them.
-		// It makes sense for Stream records that a higher-level interface provides writing and reading from, one
-		// that has no size limits and hides away record boundaries from the user.
-
 		private RecordContentsStream contents;
 		/// <summary>
 		/// Use this stream to define what content will be in this record.
@@ -55,20 +51,21 @@ namespace FastCgiNet
 		/// Do not modify these byte arrays as they may be the byte arrays that form the underlying stream.
 		/// </summary>
 		/// <remarks>The first ArraySegment enumerated is guaranteed to be the header of the record, being therefore 8 bytes long. This method rewinds the stream before and after all elements are enumerated.</remarks>
-		public override IEnumerable<ArraySegment<byte>> GetBytes() {
-			if (Contents != null)
-				Contents.Seek(0, SeekOrigin.Begin);
+		public override IEnumerable<ArraySegment<byte>> GetBytes()
+        {
+            int seekContentsBackTo = -1;
+            if (contents != null)
+            {
+                seekContentsBackTo = (int)contents.Position;
+                contents.Position = 0;
+            }
 
-			ContentLength = (ushort) (Contents == null ? 0 : Contents.Length);
+			ContentLength = (ushort) (contents == null ? 0 : contents.Length);
 			yield return CalculatePaddingAndGetHeaderBytes();
 			
-			// If we know the stream is a RecordContentsStream, then we can avoid further buffering, otherwise
-			// it is kind of inevitable that we may be copying buffers more than once
-			if (Contents != null)
+			if (contents != null)
 			{
-				Contents.Seek(0, SeekOrigin.Begin);
-
-				foreach (var buf in Contents.MemoryBlocks)
+				foreach (var buf in contents.MemoryBlocks)
 				{
 					yield return new ArraySegment<byte>(buf);
 				}
@@ -77,8 +74,10 @@ namespace FastCgiNet
 			foreach (var segment in GetPaddingBytes())
 				yield return segment;
 
-			if (Contents != null)
-				Contents.Seek(0, SeekOrigin.Begin);
+			if (contents != null)
+            {
+                contents.Position = seekContentsBackTo;
+            }
 		}
 
 		/// <summary>
@@ -127,11 +126,11 @@ namespace FastCgiNet
 
 		public void Dispose()
 		{
-			if (Contents != null)
-				Contents.Dispose();
+			if (contents != null)
+				contents.Dispose();
 		}
 
-		public override bool Equals (object obj)
+		public override bool Equals(object obj)
 		{
 			if (obj == null)
 				return false;
@@ -143,7 +142,7 @@ namespace FastCgiNet
 			return b.Contents.Equals(this.Contents) && base.Equals(b);
 		}
 
-		public override int GetHashCode ()
+		public override int GetHashCode()
 		{
 			return Contents.GetHashCode();
 		}

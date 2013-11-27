@@ -32,5 +32,18 @@ namespace FastCgiNet.Tests
 			rec = new BeginRequestRecord(1);
 			Assert.AreEqual(RecordType.FCGIBeginRequest, rec.RecordType);
 		}
+
+        [Test]
+        public void TryToCreateRecordWithLessThanHeaderBytes()
+        {
+            Assert.Throws<ArgumentException>(() => {
+                byte[] data = new byte[7];
+                int endOfRecord;
+                
+                using (var rec = new StdoutRecord(data, 0, data.Length, out endOfRecord))
+                {
+                }
+            });
+        }
 	}
 }

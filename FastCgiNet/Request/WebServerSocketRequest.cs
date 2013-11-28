@@ -9,13 +9,21 @@ namespace FastCgiNet
 	/// This class represents a FastCgi Request running over a socket, from the point of view of the WebServer. It provides easy ways to read data sent from the FastCgi application
     /// and to send data too.
 	/// </summary>
-    public class WebServerSocketRequest : FastCgiRequest, IDisposable
+    public class WebServerSocketRequest : SocketRequest
 	{
-		protected Socket Socket { get; private set; }
+        /// <summary>
+        /// The status code returned by the application.
+        /// </summary>
+        public int AppStatus { get; private set; }
+
+        /// <summary>
+        /// The Protocol Status returned by the application.
+        /// </summary>
+        public ProtocolStatus ProtocolStatus { get; private set; }
 
         #region Streams
         private SocketStream paramsStream;
-        public override FastCgiStream ParamsStream
+        public override FastCgiStream Params
         { 
             get
             {
@@ -77,105 +85,29 @@ namespace FastCgiNet
             var beginRec = new BeginRequestRecord(RequestId);
             beginRec.Role = applicationRole;
             beginRec.ApplicationMustCloseConnection = applicationMustCloseConnection;
-            Role = applicationRole;
-            ApplicationMustCloseConnection = applicationMustCloseConnection;
+//            Role = applicationRole;
+//            ApplicationMustCloseConnection = applicationMustCloseConnection;
             Send(beginRec);
         }
 
-		/// <summary>
-		/// Sends a record over the wire. This method does not throw if the socket has been closed.
-		/// </summary>
-		/// <returns>True if the record was sent successfuly, false if the socket was closed or in the process of being closed.</returns>
-		/// <remarks>If the connection was open but the record couldn't be sent for some reason, an exception is thrown. The caller should check for all possibilities because remote connection ending is not uncommon at all.</remarks>
-		public virtual bool Send(RecordBase rec)
-		{
-			if (rec == null)
-				throw new ArgumentNullException("rec");
-			else if (rec.RequestId != RequestId)
-				throw new ArgumentException("It is a necessary condition that the requestId of a record to be sent must match the connection's requestId");
-
-			try
-			{
-				foreach (var arrSegment in rec.GetBytes())
-				{
-					Socket.Send(arrSegment.Array, arrSegment.Offset, arrSegment.Count, SocketFlags.None);
-				}
-			}
-			catch (ObjectDisposedException)
-			{
-				return false;
-			}
-			catch (SocketException e)
-			{
-				if (!SocketHelper.IsConnectionAbortedByTheOtherSide(e))
-                    throw;
-
-				return false;
-			}
-
-			return true;
-		}
-
-		/// <summary>
-		/// Closes the socket from this connection safely, i.e. if it has already been closed, no exceptions happen.
-        /// If the connection wasn't closed and was closed successfuly, OnSocketClose is triggered.
-		/// </summary>
-		/// <returns>True if the connection has been successfuly closed, false if it was already closed or in the process of being closed.</returns>
-		/// <remarks>If the connection was open but couldn't be closed for some reason, an exception is thrown. The caller should check for all possibilities because remote connection ending is not uncommon at all.</remarks>
-		protected virtual bool CloseSocket()
-		{
-			try
-			{
-				Socket.Close();
-				Socket.Dispose();
-				//OnSocketClose();
-				return true;
-			}
-			catch (ObjectDisposedException)
-			{
-			}
-			catch (SocketException e)
-			{
-				if (!SocketHelper.IsConnectionAbortedByTheOtherSide(e))
-					throw;
-			}
-
-			return false;
-		}
-
-        public override void Dispose()
+        /// <summary>
+        /// If you don't have a request body to send, don't write to <see cref="Stdin"/> and call this method. It will also dispose
+        /// <see cref="Stdin"/>.
+        /// </summary>
+        public void SendEmptyStdin()
         {
-            Socket.Dispose();
-            base.Dispose();
+            using (var emptyStdin = new StdinRecord(RequestId))
+            {
+                Send(emptyStdin);
+            }
+
+            Stdin.Dispose();
         }
 
-		public override int GetHashCode()
-		{
-			// A request is uniquely identified by its socket and its requestid.
-			return Socket.GetHashCode() + 71 * RequestId;
-		}
-
-		public override bool Equals(object obj)
-		{
-			if (obj == null)
-				return false;
-
-            var b = obj as WebServerSocketRequest;
-			if (b == null)
-				return false;
-
-			return b.Socket.Equals(this.Socket) && b.RequestId.Equals(this.RequestId);
-		}
-
-		#region Constructors
         public WebServerSocketRequest(Socket s, ushort requestId)
+            : base(s)
 		{
-            if (s == null)
-                throw new ArgumentNullException("s");
-
-            this.Socket = s;
             RequestId = requestId;
  		}
-		#endregion
 	}
 }

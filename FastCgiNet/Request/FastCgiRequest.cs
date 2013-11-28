@@ -11,11 +11,59 @@ namespace FastCgiNet
 	public abstract class FastCgiRequest : IDisposable
 	{
 		public ushort RequestId { get; protected set; }
-        public Role Role { get; protected set; }
-        public bool ApplicationMustCloseConnection { get; protected set; }
+//        public Role Role { get; protected set; }
+//        public bool ApplicationMustCloseConnection { get; protected set; }
+
+        /// <summary>
+        /// This request's Record Factory.
+        /// </summary>
+        protected readonly RecordFactory RecordFactory;
+
+        /// <summary>
+        /// When data sent by the other side is received, feed it to this request using this method. This will append data to the streams
+        /// or set this request's properties. It is important that bytes are fed sequentially to this method.
+        /// </summary>
+        /// <param name="data">The array containing the received data.</param>
+        /// <param name="offset">The offset from which data is to be found in the <paramref name="data"/> array.</param>
+        /// <param name="count">The number of bytes to be read from the <paramref name="data"/> array.</param>
+        /// <returns>The records built with the newly received data.</returns>
+        public IEnumerable<RecordBase> FeedBytes(byte[] data, int offset, int count)
+        {
+            foreach (var rec in RecordFactory.Read(data, offset, count))
+            {
+                AddReceivedRecord(rec);
+                yield return rec;
+            }
+        }
+
+        private bool EndRequestSent = false;
+        /// <summary>
+        /// Whenever you want to send a record to the other side, call this base method to do some book keeping for you before you
+        /// actually send the record.
+        /// </summary>
+        /// <param name="rec">The record to send.</param>
+        protected virtual void Send(RecordBase rec)
+        {
+            if (rec == null)
+                throw new ArgumentNullException("rec");
+
+            if (rec.RecordType != RecordType.FCGIBeginRequest)
+            {
+                if (rec.RequestId != RequestId)
+                    throw new ArgumentException("The record's RequestId is different from this Request's");
+            }
+
+            if (rec.RecordType == RecordType.FCGIEndRequest)
+            {
+                if (EndRequestSent)
+                    throw new InvalidOperationException("An EndRequest has already been sent for this Request");
+
+                EndRequestSent = true;
+            }
+        }
 
         #region Streams
-        public abstract FastCgiStream ParamsStream { get; }
+        public abstract FastCgiStream Params { get; }
         public abstract FastCgiStream Stdin { get; }
         public abstract FastCgiStream Stdout { get; }
         public abstract FastCgiStream Stderr { get; }
@@ -23,16 +71,18 @@ namespace FastCgiNet
 
         public virtual void Dispose()
         {
-            ParamsStream.Dispose();
+            Params.Dispose();
             Stdin.Dispose();
             Stdout.Dispose();
             Stderr.Dispose();
         }
 
+        private bool BeginRequestReceived = false;
         /// <summary>
-        /// When a record is sent by the other side, use this method to update the streams in this request.
+        /// This method is called internally when data is received and fed to this Request. It basically sets this request's properties
+        /// or appends data to the streams. Override it and call the base method itself to implement your own logics and checking.
         /// </summary>
-        public virtual void AddReceivedRecord(RecordBase rec)
+        protected virtual void AddReceivedRecord(RecordBase rec)
         {
             if (rec == null)
                 throw new ArgumentNullException("rec");
@@ -40,13 +90,16 @@ namespace FastCgiNet
             switch (rec.RecordType)
             {
                 case RecordType.FCGIBeginRequest:
+                    // Make sure we are not getting a BeginRequest once again, as this could be serious.
+                    if (BeginRequestReceived)
+                        throw new InvalidOperationException("A BeginRequest Record has already been received by this Request");
+
+                    BeginRequestReceived = true;
                     RequestId = ((BeginRequestRecord)rec).RequestId;
-                    Role  = ((BeginRequestRecord)rec).Role;
-                    ApplicationMustCloseConnection = ((BeginRequestRecord)rec).ApplicationMustCloseConnection;
                     break;
 
                 case RecordType.FCGIParams:
-                    ParamsStream.AppendStream(((StreamRecordBase)rec).Contents);
+                    Params.AppendStream(((StreamRecordBase)rec).Contents);
                     break;
                 case RecordType.FCGIStdin:
                     Stdin.AppendStream(((StreamRecordBase)rec).Contents);
@@ -77,5 +130,10 @@ namespace FastCgiNet
 
 			return b.RequestId.Equals(this.RequestId);
 		}
+
+        public FastCgiRequest()
+        {
+            RecordFactory = new RecordFactory();
+        }
 	}
 }

@@ -40,7 +40,6 @@
     <Compile Include="GetBytesFromRecord.cs" />
     <Compile Include="StaticHelper.cs" />
     <Compile Include="ByteUtils.cs" />
-    <Compile Include="Logging\DebugLogger.cs" />
     <Compile Include="NvpFactoryTests.cs" />
     <Compile Include="Streams\FastCgiStreamImpl.cs" />
     <Compile Include="Streams\FastCgiStreamReadMode.cs" />
@@ -54,6 +53,7 @@
     <Compile Include="Streams\SocketStreamTests.cs" />
     <Compile Include="Records\ParamsRecordTests.cs" />
     <Compile Include="Records\StreamRecordTests.cs" />
+    <Compile Include="Streams\NvpWriterAndReaderTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -63,7 +63,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Logging\" />
     <Folder Include="Streams\" />
     <Folder Include="Requests\" />
     <Folder Include="Records\" />

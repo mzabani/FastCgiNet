@@ -3,6 +3,7 @@ using System.Linq;
 using System.IO;
 using NUnit.Framework;
 using FastCgiNet;
+using FastCgiNet.Streams;
 
 namespace FastCgiNet.Tests
 {
@@ -10,38 +11,49 @@ namespace FastCgiNet.Tests
     public class ParamsRecordTests
 	{
 		[Test]
-		public void CreateAndReadParamsWithOneParameter() {
+		public void CreateAndReadParamsWithOneParameter()
+        {
 			using (var paramsRec = new ParamsRecord(1))
 			{
-				paramsRec.Add("TEST", "WHATEVER");
+				using (var writer = new NvpWriter(paramsRec.Contents))
+                {
+                    writer.Write("TEST", "WHATEVER");
+                    
+    				var bytes = paramsRec.GetBytes().ToList();
+    				var header = bytes[0];
+    				int endOfRecord;
+    				using (var receivedRec = (ParamsRecord)RecordFactory.CreateRecordFromHeader(header.Array, header.Offset, header.Count, out endOfRecord))
+    				{
+    					Assert.AreEqual(paramsRec.ContentLength, receivedRec.ContentLength);
+    					for (int i = 1; i < bytes.Count; ++i)
+    					{
+    						Assert.AreEqual(-1, endOfRecord);
+    						receivedRec.FeedBytes(bytes[i].Array, bytes[i].Offset, bytes[i].Count, out endOfRecord);
+    					}
 
-				var bytes = paramsRec.GetBytes().ToList();
-				var header = bytes[0];
-				int endOfRecord;
-				using (var receivedRec = (ParamsRecord)RecordFactory.CreateRecordFromHeader(header.Array, header.Offset, header.Count, out endOfRecord))
-				{
-					Assert.AreEqual(paramsRec.ContentLength, receivedRec.ContentLength);
-					for (int i = 1; i < bytes.Count; ++i)
-					{
-						Assert.AreEqual(-1, endOfRecord);
-						receivedRec.FeedBytes(bytes[i].Array, bytes[i].Offset, bytes[i].Count, out endOfRecord);
-					}
-
-					NameValuePair onlyParameterAdded = receivedRec.Parameters.First();
-					Assert.AreEqual("TEST", onlyParameterAdded.Name);
-					Assert.AreEqual("WHATEVER", onlyParameterAdded.Value);
-				}
+                        receivedRec.Contents.Position = 0;
+                        using (var reader = new NvpReader(receivedRec.Contents))
+                        {
+                            NameValuePair onlyParameterAdded = reader.Read();
+        					Assert.AreEqual("TEST", onlyParameterAdded.Name);
+        					Assert.AreEqual("WHATEVER", onlyParameterAdded.Value);
+                        }
+    				}
+                }
 			}
 		}
 
 		[Test]
-        public void CreateAndReadParamsWithManyParameter() {
+        public void CreateAndReadParamsWithManyParameters() {
 			int numParams = 100;
 			using (var paramsRec = new ParamsRecord(1))
 			{
-				for (int i = 0; i < numParams; ++i)
-					paramsRec.Add("TEST" + i, "WHATEVER" + i);
-				
+                using (var writer = new NvpWriter(paramsRec.Contents))
+                {
+    				for (int i = 0; i < numParams; ++i)
+    					writer.Write("TEST" + i, "WHATEVER" + i);
+                }
+
 				var bytes = paramsRec.GetBytes().ToList();
 				var header = bytes[0];
 				int endOfRecord;
@@ -55,12 +67,17 @@ namespace FastCgiNet.Tests
 					}
 
 					int paramsCount = 0;
-					foreach (var par in receivedRec.Parameters)
-					{
-						Assert.AreEqual("TEST" + paramsCount, par.Name);
-						Assert.AreEqual("WHATEVER" + paramsCount, par.Value);
-						paramsCount++;
-					}
+                    receivedRec.Contents.Position = 0;
+                    using (var reader = new NvpReader(receivedRec.Contents))
+                    {
+                        NameValuePair par;
+    					while ((par = reader.Read()) != null)
+    					{
+    						Assert.AreEqual("TEST" + paramsCount, par.Name);
+    						Assert.AreEqual("WHATEVER" + paramsCount, par.Value);
+    						paramsCount++;
+    					}
+                    }
 
 					Assert.AreEqual(numParams, paramsCount);
 				}

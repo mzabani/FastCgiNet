@@ -51,15 +51,16 @@ namespace FastCgiNet.Tests
 
                     using (var applicationSocket = listenSocket.Accept())
                     {
-                        var recFactory = new RecordFactory();
                         byte[] buf = new byte[128];
                         ushort requestId = 2;
                         using (var webserverRequest = new WebServerSocketRequest(webserverSocket, requestId))
                         {
                             Assert.AreEqual(requestId, webserverRequest.RequestId);
                             webserverRequest.SendBeginRequest(Role.Responder, true);
-                            Assert.AreEqual(Role.Responder, webserverRequest.Role);
-                            Assert.IsTrue(webserverRequest.ApplicationMustCloseConnection);
+                            using (var nvpWriter = new FastCgiNet.Streams.NvpWriter(webserverRequest.Params))
+                            {
+                                nvpWriter.Write("HELLO", "WORLD");
+                            }
 
                             if (!applicationSocket.Poll(MaxPollTime, SelectMode.SelectRead))
                                 throw new Exception("Data took too long");
@@ -77,11 +78,10 @@ namespace FastCgiNet.Tests
                                     if (bytesRead == 0)
                                         throw new Exception("BeginRequest was not received");
 
-                                    foreach (var rec in recFactory.Read(buf, 0, bytesRead))
+                                    foreach (var rec in applicationRequest.FeedBytes(buf, 0, bytesRead))
                                     {
                                         if (rec is BeginRequestRecord)
                                         {
-                                            applicationRequest.AddReceivedRecord(rec);
                                             Assert.AreEqual(requestId, applicationRequest.RequestId);
                                             Assert.AreEqual(Role.Responder, applicationRequest.Role);
                                             Assert.IsTrue(applicationRequest.ApplicationMustCloseConnection);
@@ -107,12 +107,11 @@ namespace FastCgiNet.Tests
                                 if (bytesRead == 0)
                                     throw new Exception("EndRequest was not received");
                                 
-                                foreach (var rec in recFactory.Read(buf, 0, bytesRead))
+                                foreach (var rec in webserverRequest.FeedBytes(buf, 0, bytesRead))
                                 {
                                     var endRec = rec as EndRequestRecord;
                                     if (endRec != null)
                                     {
-                                        webserverRequest.AddReceivedRecord(rec);
                                         Assert.AreEqual(requestId, rec.RequestId);
                                         Assert.AreEqual(0, endRec.AppStatus);
                                         Assert.AreEqual(ProtocolStatus.RequestComplete, endRec.ProtocolStatus);
@@ -125,7 +124,7 @@ namespace FastCgiNet.Tests
                 }
             }
         }
-    
+        
         [Test]
         public void WebserverAndApplicationLongStdoutCommunication()
         {
@@ -148,12 +147,16 @@ namespace FastCgiNet.Tests
                     
                     using (var applicationSocket = listenSocket.Accept())
                     {
-                        var recFactory = new RecordFactory();
                         byte[] buf = new byte[128];
                         ushort requestId = 2;
                         using (var webserverRequest = new WebServerSocketRequest(webserverSocket, requestId))
                         {
                             webserverRequest.SendBeginRequest(Role.Responder, true);
+                            
+                            using (var nvpWriter = new FastCgiNet.Streams.NvpWriter(webserverRequest.Params))
+                            {
+                                nvpWriter.WriteParamsFromUri(new Uri("http://github.com/mzabani"), "GET");
+                            }
                             
                             if (!applicationSocket.Poll(MaxPollTime, SelectMode.SelectRead))
                                 throw new Exception("Data took too long");
@@ -164,18 +167,19 @@ namespace FastCgiNet.Tests
                                 bool beginRequestReceived = false;
                                 while (true)
                                 {
-                                    if (beginRequestReceived)
+                                    if (beginRequestReceived && applicationRequest.Params.IsComplete)
                                         break;
                                     
                                     bytesRead = applicationSocket.Receive(buf);
                                     if (bytesRead == 0)
                                         throw new Exception("Read 0 bytes");
                                     
-                                    foreach (var rec in recFactory.Read(buf, 0, bytesRead))
+                                    foreach (var rec in applicationRequest.FeedBytes(buf, 0, bytesRead))
                                     {
-                                        applicationRequest.AddReceivedRecord(rec);
                                         if (rec.RecordType == RecordType.FCGIBeginRequest)
                                             beginRequestReceived = true;
+//                                        else if (rec.RecordType == RecordType.FCGIParams)
+//                                            Console.WriteLine("RECEIVED PARAMS RECORD WITH SIZE {0}", rec.ContentLength + 8);
                                     }
                                 }
 
@@ -202,10 +206,8 @@ namespace FastCgiNet.Tests
                                 if (bytesRead == 0)
                                     throw new Exception("Read 0 bytes");
                                 
-                                foreach (var rec in recFactory.Read(buf, 0, bytesRead))
+                                foreach (var rec in webserverRequest.FeedBytes(buf, 0, bytesRead))
                                 {
-                                    webserverRequest.AddReceivedRecord(rec);
-
                                     var endRec = rec as EndRequestRecord;
                                     if (endRec != null)
                                     {

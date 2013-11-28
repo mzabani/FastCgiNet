@@ -20,15 +20,8 @@ namespace FastCgiNet.Streams
 
         private void Send(RecordBase rec)
         {
-            try
-            {
             foreach (var seg in rec.GetBytes())
                 Socket.Send(seg.Array, seg.Offset, seg.Count, SocketFlags.None);
-            }
-            catch (Exception e)
-            {
-                throw;
-            }
         }
 
         /// <summary>

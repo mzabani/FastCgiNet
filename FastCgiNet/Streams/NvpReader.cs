@@ -6,7 +6,7 @@ namespace FastCgiNet.Streams
 {
     public class NvpReader : IDisposable
     {
-        private FastCgiStream ParamsStream;
+        private Stream ParamsStream;
         private IEnumerator<NameValuePair> Enumerator;
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace FastCgiNet.Streams
         /// <summary>
         /// Provides an easy way to read NameValuePairs from a Params Stream. When disposed, disposes the stream passed in this constructor as well.
         /// </summary>
-        public NvpReader(FastCgiStream stream)
+        public NvpReader(Stream stream)
         {
             if (stream == null)
                 throw new ArgumentNullException("stream");

@@ -1,11 +1,10 @@
 using System;
-using FastCgiNet.Logging;
 using System.Collections.Generic;
 
 namespace FastCgiNet
 {
 	/// <summary>
-	/// This class makes it easy for you to build FastCgi Records with bytes received through the communication medium.
+	/// This class makes it easy for you to build FastCgi Records with bytes received through the communication medium (e.g. a socket).
 	/// </summary>
 	public class RecordFactory
 	{

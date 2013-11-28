@@ -34,43 +34,42 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Records\StdinRecord.cs" />
     <Compile Include="Records\RecordBase.cs" />
     <Compile Include="Records\StdoutRecord.cs" />
     <Compile Include="Records\StderrRecord.cs" />
     <Compile Include="Exceptions\InsufficientBytesException.cs" />
     <Compile Include="ByteUtils.cs" />
-    <Compile Include="NvpFactory.cs" />
     <Compile Include="Streams\RecordContentsStream.cs" />
     <Compile Include="Records\StreamRecordBase.cs" />
     <Compile Include="Streams\SocketStream.cs" />
     <Compile Include="Streams\FastCgiStream.cs" />
-    <Compile Include="Request\SocketHelper.cs" />
     <Compile Include="Streams\NvpWriter.cs" />
     <Compile Include="Streams\NvpReader.cs" />
-    <Compile Include="Records\Params\ParamsRecord.cs" />
-    <Compile Include="Records\Params\NameValuePair.cs" />
     <Compile Include="Records\BeginRequest\BeginRequestRecord.cs" />
     <Compile Include="Records\BeginRequest\Role.cs" />
     <Compile Include="Records\EndRequest\ProtocolStatus.cs" />
     <Compile Include="Records\EndRequest\EndRequestRecord.cs" />
     <Compile Include="Records\RecordType.cs" />
-    <Compile Include="NvpEnumerator.cs" />
-    <Compile Include="RecordFactory.cs" />
     <Compile Include="Request\FastCgiRequest.cs" />
     <Compile Include="Request\ApplicationSocketRequest.cs" />
     <Compile Include="Request\WebServerSocketRequest.cs" />
+    <Compile Include="Request\SocketRequest.cs" />
+    <Compile Include="Html.cs" />
+    <Compile Include="Nvp\NvpEnumerator.cs" />
+    <Compile Include="Nvp\NvpFactory.cs" />
+    <Compile Include="Nvp\NameValuePair.cs" />
+    <Compile Include="Records\ParamsRecord.cs" />
+    <Compile Include="Records\RecordFactory.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Folder Include="Logging\" />
     <Folder Include="Records\" />
     <Folder Include="Exceptions\" />
     <Folder Include="Streams\" />
     <Folder Include="Request\" />
-    <Folder Include="Records\Params\" />
     <Folder Include="Records\BeginRequest\" />
     <Folder Include="Records\EndRequest\" />
+    <Folder Include="Nvp\" />
   </ItemGroup>
 </Project>

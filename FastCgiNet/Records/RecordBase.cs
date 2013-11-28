@@ -120,8 +120,7 @@ namespace FastCgiNet
 		/// Enumerates byte array segments that compose this record. This is useful to send through a socket, for instance.
 		/// Do not modify these byte arrays as they may be the byte arrays that form the underlying stream.
 		/// </summary>
-		/// <remarks>The first ArraySegment enumerated is guaranteed to be the header of the record, being therefore 8 bytes long.</remarks>
-		//public abstract IEnumerable<ArraySegment<byte>> GetBytes();
+                                                                                                                                      		/// <remarks>The first ArraySegment enumerated is guaranteed to be the header of the record, being therefore 8 bytes long.</remarks>
         public abstract IEnumerable<ArraySegment<byte>> GetBytes();
 		
 		/// <summary>
@@ -155,7 +154,7 @@ namespace FastCgiNet
 		public override int GetHashCode()
 		{
 			//TODO: Do better than this
-			return base.GetHashCode ();
+			return base.GetHashCode();
 		}
 
 		private RecordBase()

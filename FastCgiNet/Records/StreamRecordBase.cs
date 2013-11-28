@@ -62,7 +62,7 @@ namespace FastCgiNet
 
 			ContentLength = (ushort) (contents == null ? 0 : contents.Length);
 			yield return CalculatePaddingAndGetHeaderBytes();
-			
+
 			if (contents != null)
 			{
 				foreach (var buf in contents.MemoryBlocks)

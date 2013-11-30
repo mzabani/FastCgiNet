@@ -43,7 +43,7 @@ namespace FastCgiNet.Streams
             else if (method == null)
                 throw new ArgumentNullException("method");
             else if (ValidMethods.Contains(method) == false)
-                throw new ArgumentException("Method is not valid. Make sure it is a valid upper case HTTP/1.1 method written ");
+                throw new ArgumentException("Method is not valid. Make sure it is a valid upper case HTTP/1.1 method");
             
             Write("HTTP_HOST", u.Host);
             if (u.Scheme == Uri.UriSchemeHttps)

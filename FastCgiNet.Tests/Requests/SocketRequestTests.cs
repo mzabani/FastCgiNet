@@ -3,6 +3,7 @@ using System.Linq;
 using System.IO;
 using NUnit.Framework;
 using FastCgiNet;
+using FastCgiNet.Requests;
 using System.Net;
 using System.Net.Sockets;
 
@@ -178,8 +179,6 @@ namespace FastCgiNet.Tests
                                     {
                                         if (rec.RecordType == RecordType.FCGIBeginRequest)
                                             beginRequestReceived = true;
-//                                        else if (rec.RecordType == RecordType.FCGIParams)
-//                                            Console.WriteLine("RECEIVED PARAMS RECORD WITH SIZE {0}", rec.ContentLength + 8);
                                     }
                                 }
 

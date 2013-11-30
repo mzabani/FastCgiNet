@@ -13,16 +13,15 @@ namespace FastCgiNet
 		{
 			get
 			{
-				return (AppAndProtocolStatus[0] << 24) + (AppAndProtocolStatus[1] << 16) + (AppAndProtocolStatus[2] << 8) + AppAndProtocolStatus[3];
+				return (AppAndProtocolStatus[0] << 24) | (AppAndProtocolStatus[1] << 16) | (AppAndProtocolStatus[2] << 8) | AppAndProtocolStatus[3];
 			}
             set
             {
                 // MSB is byte index 0, LSB is byte index 3
-                ushort role = (ushort)value;
-                AppAndProtocolStatus[0] = (byte) (role & 0xFF000000);
-                AppAndProtocolStatus[1] = (byte) (role & 0xFF0000);
-                AppAndProtocolStatus[2] = (byte) (role & 0xFF00);
-                AppAndProtocolStatus[3] = (byte) (role & 0xFF);
+                AppAndProtocolStatus[0] = (byte) (value & 0xFF000000);
+                AppAndProtocolStatus[1] = (byte) (value & 0xFF0000);
+                AppAndProtocolStatus[2] = (byte) (value & 0xFF00);
+                AppAndProtocolStatus[3] = (byte) (value & 0xFF);
             }
 		}
 		public ProtocolStatus ProtocolStatus

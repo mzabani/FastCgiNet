@@ -1,4 +1,0 @@
-/home/mzabani/Projects/FastCgiNet/FastCgiNet/bin/Debug/FastCgiNet.dll.mdb
-/home/mzabani/Projects/FastCgiNet/FastCgiNet/bin/Debug/FastCgiNet.dll
-/home/mzabani/Projects/FastCgiNet/FastCgiNet/obj/Debug/FastCgiNet.dll
-/home/mzabani/Projects/FastCgiNet/FastCgiNet/obj/Debug/FastCgiNet.dll.mdb

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using FastCgiNet.Streams;
 
-namespace FastCgiNet
+namespace FastCgiNet.Requests
 {
 	/// <summary>
 	/// This class represents a FastCgi request. It serves as a common base class for real FastCgi requests running over a socket
@@ -36,7 +36,8 @@ namespace FastCgiNet
             }
         }
 
-        private bool EndRequestSent = false;
+        protected bool BeginRequestSent { get; private set; }
+        protected bool EndRequestSent { get; private set; }
         /// <summary>
         /// Whenever you want to send a record to the other side, call this base method to do some book keeping for you before you
         /// actually send the record.
@@ -51,6 +52,13 @@ namespace FastCgiNet
             {
                 if (rec.RequestId != RequestId)
                     throw new ArgumentException("The record's RequestId is different from this Request's");
+            }
+            else
+            {
+                if (BeginRequestSent)
+                    throw new InvalidOperationException("A BeginRequest has already been sent for this Request");
+
+                BeginRequestSent = true;
             }
 
             if (rec.RecordType == RecordType.FCGIEndRequest)
@@ -77,7 +85,8 @@ namespace FastCgiNet
             Stderr.Dispose();
         }
 
-        private bool BeginRequestReceived = false;
+        protected bool BeginRequestReceived { get; private set; }
+        protected bool EndRequestReceived { get; private set; }
         /// <summary>
         /// This method is called internally when data is received and fed to this Request. It basically sets this request's properties
         /// or appends data to the streams. Override it and call the base method itself to implement your own logics and checking.
@@ -96,6 +105,14 @@ namespace FastCgiNet
 
                     BeginRequestReceived = true;
                     RequestId = ((BeginRequestRecord)rec).RequestId;
+                    break;
+
+                case RecordType.FCGIEndRequest:
+                    // Make sure we are not getting a BeginRequest once again, as this could be serious.
+                    if (EndRequestReceived)
+                        throw new InvalidOperationException("An EndRequest Record has already been received by this Request");
+                    
+                    EndRequestReceived = true;
                     break;
 
                 case RecordType.FCGIParams:
@@ -134,6 +151,10 @@ namespace FastCgiNet
         public FastCgiRequest()
         {
             RecordFactory = new RecordFactory();
+            BeginRequestSent = false;
+            BeginRequestReceived = false;
+            EndRequestSent = false;
+            EndRequestReceived = false;
         }
 	}
 }

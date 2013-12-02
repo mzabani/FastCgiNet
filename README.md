@@ -8,13 +8,13 @@ The API is still changing between commits. That said, here are some docs on how 
 
 The Requests API
 ----------------
-There are two APIs in FastCgiNet: the Records API and the Requests API. The Requests API is the recommended API and should fit most user's needs. This section describes it.
+There are two APIs in FastCgiNet: the Records API and the Requests API. The Requests API is the recommended API and should fit most users' needs. This section describes it.
 
 The webserver's point of view:
-1. When the browser requests a page/url, the webserver must request an answer from the application.
-2. The application will then write the HTTP Response Status, HTTP Response Headers and Standard Output (it may also write to the Standard Error Output) and the webserver will finally send these to the actual visitor.
+1. When the browser requests a page/url, the webserver must request an answer from the application.  
+2. The application will then write the HTTP Response Status, HTTP Response Headers and Standard Output (it may also write to the Standard Error Output) and the webserver will finally send these to the actual visitor.  
 
-So if you are writing a WebServer, you must use a *WebServerSocketRequest* per visitor's request, like this:
+So if you are writing a Web Server, you might want to use a *WebServerSocketRequest* per visitor's request, like this:
 ```
 using FastCgiNet;
 using FastCgiNet.Streams;
@@ -44,7 +44,7 @@ using (var request = new WebServerSocketRequest(sock, requestId))
 		// HTTP_HOST, HTTPS, SCRIPT_NAME, DOCUMENT_URI, REQUEST_METHOD, SERVER_NAME, QUERY_STRING, REQUEST_URI, SERVER_PROTOCOL, GATEWAY_INTERFACE
 		nvpWriter.WriteParamsFromUri(requestedUrl, requestMethod);
 
-		// The other http request headers, e.g. cookies
+		// The other http request headers, e.g. User-Agent
 		nvpWriter.Write("HTTP_USER_AGENT", "Super cool Browser v1.0");
 	}
 
@@ -67,7 +67,10 @@ using (var request = new WebServerSocketRequest(sock, requestId))
 		Console.Write(reader.ReadToEnd());
 	}
 }
-// The socket and all other resources are automatically disposed at this point. This implies that WebServerSocketRequest still doesn't multiplex requests (not for long, hopefully - also, you can inherit from this class and make *Dispose()* not call *CloseSocket()* if you want to multiplex requests)
+// The socket and all other resources are automatically disposed at this point.
+// This implies that WebServerSocketRequest still doesn't multiplex requests 
+// (not for long, hopefully - also, you can inherit from this class and make
+// *Dispose()* not call *CloseSocket()* if you want to multiplex requests)
 
 ```
 
@@ -100,7 +103,7 @@ using (var listenSock = new Socket(AddressFamily.InterNetwork, SocketType.Stream
 		}
 
 		// Let's look for the requested path and ignore everything else
-		string requestedPath;
+		string requestedPath = null;
 		using (var nvpReader = new NvpReader(request.Params))
 		{
 			NameValuePair nvp;
@@ -128,13 +131,18 @@ using (var listenSock = new Socket(AddressFamily.InterNetwork, SocketType.Stream
 		request.SendEndRequest(0, ProtocolStatus.RequestComplete);
 	}
 
-	// The connection socket and all other resources are automatically disposed at this point. This implies that ApplicationSocketRequest still doesn't multiplex requests (not for long, hopefully - also, you can inherit from this class and make *Dispose()* not call *CloseSocket()* if you want to multiplex requests)
+	// The connection socket and all other resources (except for the 
+	// listen socket) are automatically disposed at this point. This
+	// implies that ApplicationSocketRequest still doesn't multiplex
+	// requests (not for long, hopefully - also, you can inherit from
+	// this class and make *Dispose()* not call *CloseSocket()* if 
+	// you want to multiplex requests).
 }
 
 
 ```
 
-Once again, don't forget to handle all sorts of socket and evil webserver errors.
+Once again, don't forget to handle all sorts of socket and evil web server errors.
 
 The Records API
 --------------
@@ -145,8 +153,7 @@ This is a lower level API that allows you to build Records and send them yoursel
 - The Requests API makes several sanity checks that make it very helpful.
 
 This API is public because in conjunction with the Requests API, a power user might make good use of it (although I see very few use cases myself).
-As such, I will not take effort in documenting this API. The code is very well documented and intuitive, so if you need it, just explore the API and you'll probably be fine.
-
+As such, I will not take as much effort in documenting this API as I will take documenting the Requests API. The code is very well documented and intuitive, so if you need it, just explore the API and you'll probably be fine.
 
 TODO
 ----

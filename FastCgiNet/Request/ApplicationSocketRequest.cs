@@ -81,8 +81,19 @@ namespace FastCgiNet.Requests
             }
         }
 
+        /// <summary>
+        /// After writing to the output Streams, you have to end the request with a Status Code and a protocol status.
+        /// Use this method to do that before disposing this object.
+        /// </summary>
+        /// <param name="appStatus">The Application status. Use 0 for success and anything else for error.</param>
         public void SendEndRequest(int appStatus, ProtocolStatus protocolStatus)
         {
+            // Flush stuff before doing this!
+            Params.Dispose();
+            Stdin.Dispose();
+            Stdout.Dispose();
+            Stderr.Dispose();
+
             var rec = new EndRequestRecord(RequestId);
             rec.AppStatus = appStatus;
             rec.ProtocolStatus = protocolStatus;

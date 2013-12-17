@@ -11,8 +11,6 @@ namespace FastCgiNet.Requests
 	public abstract class FastCgiRequest : IDisposable
 	{
 		public ushort RequestId { get; protected set; }
-//        public Role Role { get; protected set; }
-//        public bool ApplicationMustCloseConnection { get; protected set; }
 
         /// <summary>
         /// This request's Record Factory.
@@ -71,6 +69,7 @@ namespace FastCgiNet.Requests
         }
 
         #region Streams
+        public abstract FastCgiStream Data { get; }
         public abstract FastCgiStream Params { get; }
         public abstract FastCgiStream Stdin { get; }
         public abstract FastCgiStream Stdout { get; }

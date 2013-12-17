@@ -62,6 +62,7 @@
     <Compile Include="Records\ParamsRecord.cs" />
     <Compile Include="Records\RecordFactory.cs" />
     <Compile Include="Records\AbortRequestRecord.cs" />
+    <Compile Include="Records\DataRecord.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

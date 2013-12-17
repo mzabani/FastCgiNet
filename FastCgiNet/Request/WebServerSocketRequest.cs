@@ -33,6 +33,19 @@ namespace FastCgiNet.Requests
         }
 
         #region Streams
+        private SocketStream dataStream;
+        public override FastCgiStream Data
+        { 
+            get
+            {
+                if (dataStream == null)
+                {
+                    dataStream = new SocketStream(Socket, RecordType.FCGIData, false);
+                }
+                
+                return dataStream;
+            }
+        }
         private SocketStream paramsStream;
         public override FastCgiStream Params
         { 
@@ -96,8 +109,6 @@ namespace FastCgiNet.Requests
             var beginRec = new BeginRequestRecord(RequestId);
             beginRec.Role = applicationRole;
             beginRec.ApplicationMustCloseConnection = applicationMustCloseConnection;
-//            Role = applicationRole;
-//            ApplicationMustCloseConnection = applicationMustCloseConnection;
             Send(beginRec);
         }
 

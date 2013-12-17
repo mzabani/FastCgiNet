@@ -15,6 +15,19 @@ namespace FastCgiNet.Requests
         public bool ApplicationMustCloseConnection { get; private set; }
 
         #region Streams
+        private SocketStream dataStream;
+        public override FastCgiStream Data
+        { 
+            get
+            {
+                if (dataStream == null)
+                {
+                    dataStream = new SocketStream(Socket, RecordType.FCGIData, true);
+                }
+                
+                return dataStream;
+            }
+        }
         private SocketStream paramsStream;
         public override FastCgiStream Params
         { 
@@ -89,6 +102,7 @@ namespace FastCgiNet.Requests
         public void SendEndRequest(int appStatus, ProtocolStatus protocolStatus)
         {
             // Flush stuff before doing this!
+            Data.Dispose();
             Params.Dispose();
             Stdin.Dispose();
             Stdout.Dispose();

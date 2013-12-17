@@ -20,11 +20,11 @@ namespace FastCgiNet
     internal static class ExtensionMethods
     {
         /// <summary>
-        /// Returns true if this RecordType is either Stderr, Stdin, Stdout or Params.
+        /// Returns true if this RecordType is either Stderr, Stdin, Stdout, Params or Data.
         /// </summary>
         public static bool IsStreamType(this RecordType type)
         {
-            return type == RecordType.FCGIStderr || type == RecordType.FCGIStdin || type == RecordType.FCGIStdout || type == RecordType.FCGIParams;
+            return type == RecordType.FCGIStderr || type == RecordType.FCGIStdin || type == RecordType.FCGIStdout || type == RecordType.FCGIParams || type == RecordType.FCGIData;
         }
     }
 }

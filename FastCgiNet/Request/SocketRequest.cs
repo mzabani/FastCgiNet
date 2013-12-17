@@ -19,6 +19,7 @@ namespace FastCgiNet.Requests
             var beginRequestRec = rec as BeginRequestRecord;
             if (beginRequestRec != null)
             {
+                ((SocketStream)Data).RequestId = beginRequestRec.RequestId;
                 ((SocketStream)Params).RequestId = beginRequestRec.RequestId;
                 ((SocketStream)Stdin).RequestId = beginRequestRec.RequestId;
                 ((SocketStream)Stdout).RequestId = beginRequestRec.RequestId;

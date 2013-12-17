@@ -31,6 +31,9 @@ namespace FastCgiNet.Tests
 
 			rec = new BeginRequestRecord(1);
 			Assert.AreEqual(RecordType.FCGIBeginRequest, rec.RecordType);
+
+            rec = new DataRecord(1);
+            Assert.AreEqual(RecordType.FCGIData, rec.RecordType);
 		}
 
         [Test]

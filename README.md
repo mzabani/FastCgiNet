@@ -2,15 +2,16 @@ FastCgiNet
 ==========
 A FastCgi library written in C#. FastCgi is a protocol that allows traditional CGI applications or console applications to run smoothlessly (without changingtheir code) side by side with a Web Server, responding to user's HTTP requests. It can also be used to run other types of web applications (PHP, RoR and Owin applications) and is a very good hosting choice for many reasons (see [the official site](http://www.fastcgi.com)). It should be noted that FastCgiNet **does not intend** to enable console .NET applications to run without any code changes: FastCgiNet does not redirect stdin, stdout or stderr. It provides other mechanisms for applications to function as a CGI application.
 
-API
----
-The API is still changing between commits. That said, here are some docs on how to use this library:
+API and Installation
+--------
+You can clone and build with Monodevelop or Visual Studio or download FastCgiNet via NuGet. Beware that the API may change in the near future, though not badly. That said, here are some docs on how to use this library:
 
 The Requests API
 ----------------
 There are two APIs in FastCgiNet: the Records API and the Requests API. The Requests API is the recommended API and should fit most users' needs. This section describes it.
 
-The webserver's point of view:
+The webserver's point of view:  
+
 1. When the browser requests a page/url, the webserver must request an answer from the application.  
 2. The application will then write the HTTP Response Status, HTTP Response Headers and Standard Output (it may also write to the Standard Error Output) and the webserver will finally send these to the actual visitor.  
 

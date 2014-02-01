@@ -11,8 +11,8 @@ namespace FastCgiNet
 	/// </summary>
 	public abstract class StreamRecordBase : RecordBase, IDisposable
 	{
-		int addedContentLength;
-		int addedPaddingLength;
+		private int addedContentLength;
+		private int addedPaddingLength;
 
 		private RecordContentsStream contents;
 		/// <summary>

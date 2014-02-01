@@ -26,7 +26,7 @@ namespace FastCgiNet.Tests
         {
 			var rec = new EndRequestRecord(1);
 
-            for (int status = 0; status < 10; ++status)
+            for (int status = 20000000; status < 20000010; ++status)
             {
                 rec.AppStatus = status;
                 Assert.AreEqual(status, rec.AppStatus);

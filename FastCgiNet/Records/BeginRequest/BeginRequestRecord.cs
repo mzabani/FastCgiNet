@@ -6,8 +6,8 @@ namespace FastCgiNet
 {
 	public class BeginRequestRecord : RecordBase
 	{
-		byte[] RoleAndFlags;
-		int fedBytes;
+		private byte[] RoleAndFlags;
+		private int fedBytes;
 		
 		public Role Role
 		{
@@ -19,7 +19,7 @@ namespace FastCgiNet
 			{
 				// MSB is byte index 0, LSB is byte index 1
 				ushort role = (ushort)value;
-				RoleAndFlags[0] = (byte) (role & 0xFF00);
+				RoleAndFlags[0] = (byte) ((role & 0xFF00) >> 8);
 				RoleAndFlags[1] = (byte) (role & 0xFF);
 			}
 		}

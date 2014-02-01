@@ -6,21 +6,24 @@ namespace FastCgiNet
 {
 	public class EndRequestRecord : RecordBase
 	{
-		byte[] AppAndProtocolStatus;
-		int fedBytes;
+		private byte[] AppAndProtocolStatus;
+		private int fedBytes;
 		
+        /// <summary>
+        /// The return status code for your FastCgi Application. Negative numbers indicate that an error occurred.
+        /// </summary>
 		public int AppStatus
 		{
 			get
 			{
-				return (AppAndProtocolStatus[0] << 24) | (AppAndProtocolStatus[1] << 16) | (AppAndProtocolStatus[2] << 8) | AppAndProtocolStatus[3];
+               return (AppAndProtocolStatus[0] << 24) | (AppAndProtocolStatus[1] << 16) | (AppAndProtocolStatus[2] << 8) | AppAndProtocolStatus[3];
 			}
             set
             {
-                // MSB is byte index 0, LSB is byte index 3
-                AppAndProtocolStatus[0] = (byte) (value & 0xFF000000);
-                AppAndProtocolStatus[1] = (byte) (value & 0xFF0000);
-                AppAndProtocolStatus[2] = (byte) (value & 0xFF00);
+                // MSB in array index 0, LSB in array index 3
+                AppAndProtocolStatus[0] = (byte) ((value & 0xFF000000) >> 24);
+                AppAndProtocolStatus[1] = (byte) ((value & 0xFF0000) >> 16);
+                AppAndProtocolStatus[2] = (byte) ((value & 0xFF00) >> 8);
                 AppAndProtocolStatus[3] = (byte) (value & 0xFF);
             }
 		}

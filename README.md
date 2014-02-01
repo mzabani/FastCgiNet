@@ -16,7 +16,7 @@ The webserver's point of view:
 2. The application will then write the HTTP Response Status, HTTP Response Headers and Standard Output (it may also write to the Standard Error Output) and the webserver will finally send these to the actual visitor.  
 
 So if you are writing a Web Server, you might want to use a *WebServerSocketRequest* per visitor's request, like this:
-```
+```c#
 using FastCgiNet;
 using FastCgiNet.Streams;
 using FastCgiNet.Requests;
@@ -71,14 +71,14 @@ using (var request = new WebServerSocketRequest(sock, requestId))
 // The socket and all other resources are automatically disposed at this point.
 // This implies that WebServerSocketRequest still doesn't multiplex requests 
 // (not for long, hopefully - also, you can inherit from this class and make
-// *Dispose()* not call *CloseSocket()* if you want to multiplex requests)
+// Dispose() not call CloseSocket() if you want to multiplex requests)
 
 ```
 
 The code sample above is a pretty good demonstration of how easy it is to use FastCgiNet! Don't forget to handle all sorts of errors, though. For instance, the socket can be closed abruptly by the application any time and an evil application could hold you in an infinite loop if it never sends an EndRequest Record.
 Now let's look at it from the application's point of view, with the *ApplicationSocketRequest* class:
 
-```
+```c#
 using FastCgi;
 using FastCgi.Streams;
 using FastCgi.Requests;
@@ -136,10 +136,9 @@ using (var listenSock = new Socket(AddressFamily.InterNetwork, SocketType.Stream
 	// listen socket) are automatically disposed at this point. This
 	// implies that ApplicationSocketRequest still doesn't multiplex
 	// requests (not for long, hopefully - also, you can inherit from
-	// this class and make *Dispose()* not call *CloseSocket()* if 
+	// this class and make Dispose() not call CloseSocket() if 
 	// you want to multiplex requests).
 }
-
 
 ```
 

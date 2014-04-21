@@ -2,7 +2,7 @@ using System;
 
 namespace FastCgiNet
 {
-	public enum RecordType
+	public enum RecordType : short
 	{
 		FCGIBeginRequest = 1,
 		FCGIAbortRequest,

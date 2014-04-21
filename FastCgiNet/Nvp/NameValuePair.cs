@@ -16,26 +16,30 @@ namespace FastCgiNet
 		{
 			get
 			{
-                //TODO: Use ASCIIEncoding
-				var x = new StringBuilder(NameLength);
-				foreach (byte b in nameBytes)
-					x.Append((char)b);
+                return System.Text.ASCIIEncoding.ASCII.GetString(nameBytes);
 
-				return x.ToString();
+//                //TODO: Use ASCIIEncoding
+//				var x = new StringBuilder(NameLength);
+//				foreach (byte b in nameBytes)
+//					x.Append((char)b);
+//
+//				return x.ToString();
 			}
 		}
 		public string Value
 		{
 			get
 			{
-                //TODO: Use ASCIIEncoding
-				var x = new StringBuilder(ValueLength);
-				foreach (byte b in valueBytes)
-				{
-					x.Append((char)b);
-				}
-				
-				return x.ToString();
+                return System.Text.ASCIIEncoding.ASCII.GetString(valueBytes);
+
+//                //TODO: Use ASCIIEncoding
+//				var x = new StringBuilder(ValueLength);
+//				foreach (byte b in valueBytes)
+//				{
+//					x.Append((char)b);
+//				}
+//				
+//				return x.ToString();
 			}
 		}
 

@@ -1,6 +1,6 @@
 FastCgiNet
 ==========
-A FastCgi library written in C#. FastCgi is a protocol that allows traditional CGI applications or console applications to run smoothlessly (without changingtheir code) side by side with a Web Server, responding to user's HTTP requests. It can also be used to run other types of web applications (PHP, RoR and Owin applications) and is a very good hosting choice for many reasons (see [the official site](http://www.fastcgi.com)). It should be noted that FastCgiNet **does not intend** to enable console .NET applications to run without any code changes: FastCgiNet does not redirect stdin, stdout or stderr. It provides other mechanisms for applications to function as a CGI application.
+A FastCgi library written in C#. FastCgi is a protocol that allows traditional CGI applications or console applications to run smoothlessly (without changing their code) side by side with a Web Server, responding to user's HTTP requests. It can also be used to run other types of web applications (PHP, RoR and Owin applications) and is a very good hosting choice for many reasons (see [the official site](http://www.fastcgi.com)). It should be noted that FastCgiNet **does not intend** to enable console .NET applications to run without any code changes: FastCgiNet does not redirect stdin, stdout or stderr. It provides other mechanisms for applications to function as a CGI application.
 
 API and Installation
 --------
@@ -79,9 +79,9 @@ The code sample above is a pretty good demonstration of how easy it is to use Fa
 Now let's look at it from the application's point of view, with the *ApplicationSocketRequest* class:
 
 ```c#
-using FastCgi;
-using FastCgi.Streams;
-using FastCgi.Requests;
+using FastCgiNet;
+using FastCgiNet.Streams;
+using FastCgiNet.Requests;
 
 ...
 

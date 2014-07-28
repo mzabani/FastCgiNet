@@ -16,8 +16,13 @@ namespace FastCgiNet.Streams
 
 		private long position;
 
+        /// <summary>
+        /// The position of the first byte of this stream in the stream returned by the supplied implementation of <see cref="ISecondaryStorageOps"/>.
+        /// </summary>
+        private long secondaryStoragePosition;
+        private ISecondaryStorageOps secondaryStorageOps;
 		/// <summary>
-		/// The blocks of memory that have been written to this stream.
+		/// If not stored in secondary storage, this list represents all the the data that has been written to this stream.
 		/// </summary>
 		internal LinkedList<byte[]> MemoryBlocks;
 		private int length;
@@ -49,6 +54,15 @@ namespace FastCgiNet.Streams
 			if (position == length)
 				return 0;
 
+            // 1. If we are reading from secondary storage, it is quite straight forward
+            if (secondaryStorageOps != null)
+            {
+                var dataStream = secondaryStorageOps.ReadData();
+                dataStream.Seek(secondaryStoragePosition + position, SeekOrigin.Begin);
+                return dataStream.Read(buffer, offset, count);
+            }
+
+            // 2. If we are reading from memory, then it is not so simple
 			int positionSoFar = 0;
 			int bytesCopied = 0;
 			foreach (var arr in MemoryBlocks)
@@ -97,7 +111,7 @@ namespace FastCgiNet.Streams
 		}
 
 		/// <summary>
-		/// Writes to this stream, effectively copying bytes from <paramref name="buffer"/> to internal buffers.
+		/// Writes to this stream, effectively copying bytes from <paramref name="buffer"/> to internal buffers or to secondary storage accordingly.
 		/// </summary>
 		public override void Write(byte[] buffer, int offset, int count)
 		{
@@ -105,9 +119,21 @@ namespace FastCgiNet.Streams
 			if (position != length)
 				throw new NotImplementedException("At the moment, only writing at the end of the stream is supported");
 
-			var internalBuffer = new byte[count];
-			Array.Copy (buffer, offset, internalBuffer, 0, count);
-			MemoryBlocks.AddLast(internalBuffer);
+            // 1. Secondary storage
+            if (secondaryStorageOps != null)
+            {
+                var dataStream = secondaryStorageOps.ReadData();
+                dataStream.Write(buffer, offset, count);
+                return;
+            }
+            else
+            {
+                // 2. In memory storage
+                var internalBuffer = new byte[count];
+                Array.Copy(buffer, offset, internalBuffer, 0, count);
+                MemoryBlocks.AddLast(internalBuffer);
+            }
+
 			length += count;
 			position += count;
 
@@ -169,11 +195,12 @@ namespace FastCgiNet.Streams
 			if (b == null)
 				return false;
 
-			// Check lenghts first
+			// Check lengths first
 			if (this.Length != b.Length)
 				return false;
 
 			// Compare byte by byte.. kind of expensive
+            //TODO: Do we really need such a strict equality criterium?
 			byte[] bufForB = new byte[128];
 			byte[] bufForA = new byte[128];
 			this.Position = 0;
@@ -192,14 +219,35 @@ namespace FastCgiNet.Streams
 
 		public override int GetHashCode()
 		{
-			return length + 31 * MemoryBlocks.Sum(mb => mb.GetHashCode());
+            // We are very lax here.. no need to read from secondary storage or go over every single byte
+            // just to hash this stream
+			return length + 31 * MemoryBlocks.Take(1).Sum(mb => mb.GetHashCode());
 		}
 
+        /// <summary>
+        /// Creates a stream that stores one record's contents in memory.
+        /// </summary>
 		public RecordContentsStream()
 		{
 			MemoryBlocks = new LinkedList<byte[]>();
+            secondaryStorageOps = null;
 			length = 0;
 			position = 0;
 		}
+
+        /// <summary>
+        /// Creates a stream that stores one record's contents in secondary storage. The life-cycle of the supplied
+        /// <see cref="ISecondaryStorageOps"/> has no relation with this stream whatsoever.
+        /// </summary>
+        public RecordContentsStream(ISecondaryStorageOps secondaryStorageOps)
+        {
+            if (secondaryStorageOps == null)
+                throw new ArgumentNullException("secondaryStorageOps");
+
+            this.secondaryStorageOps = secondaryStorageOps;
+            secondaryStoragePosition = secondaryStorageOps.ReadData().Position;
+            length = 0;
+            position = 0;
+        }
 	}
 }

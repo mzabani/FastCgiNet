@@ -89,9 +89,6 @@ namespace FastCgiNet
 		{
 			AssertArrayOperation(data, offset, length);
 
-			if (Contents == null)
-				Contents = new RecordContentsStream();
-
 			// Fill up the Content if we can
 			int contentNeeded = ContentLength - addedContentLength;
 			if (contentNeeded <= length)
@@ -147,20 +144,46 @@ namespace FastCgiNet
 			return Contents.GetHashCode();
 		}
 
+        /// <summary>
+        /// Base constructor that initializes this record's contents' stream to use memory.
+        /// </summary>
 		public StreamRecordBase(RecordType recordType, ushort requestId)
 			: base(recordType, requestId)
 		{
+            contents = new RecordContentsStream();
 		}
 
-		internal StreamRecordBase(RecordType recordType, byte[] data, int offset, int length, out int endOfRecord)
-			: base(data, offset, length, recordType)
-		{
-			if (ContentLength + PaddingLength == 0)
-				endOfRecord = offset + 7;
-			else if (length > 8)
-				FeedBytes(data, offset + 8, length - 8, out endOfRecord);
-			else
-				endOfRecord = -1;
-		}
+        /// <summary>
+        /// Base constructor that initializes this record's contents' stream to use secondary storage. The life-cycle of the supplied
+        /// <see cref="ISecondaryStorageOps"/> has no relation with this record whatsoever.
+        /// </summary>
+        public StreamRecordBase(RecordType recordType, ushort requestId, ISecondaryStorageOps secondaryStorageOps)
+            : this(recordType, requestId)
+        {
+            if (secondaryStorageOps == null)
+                throw new ArgumentNullException("secondaryStorageOps");
+
+            contents = new RecordContentsStream(secondaryStorageOps);
+        }
+
+        /// <summary>
+        /// Base constructor that initializes this record's contents' stream to use secondary storage if
+        /// <paramref name="secondaryStorageOps"/> is not null and to use in memory storage if it is, already feeding it its first bytes.
+        /// </summary>
+        internal StreamRecordBase(RecordType recordType, ISecondaryStorageOps secondaryStorageOps, byte[] data, int offset, int length, out int endOfRecord)
+            : base(data, offset, length, recordType)
+        {
+            if (secondaryStorageOps != null)
+                contents = new RecordContentsStream(secondaryStorageOps);
+            else
+                contents = new RecordContentsStream();
+
+            if (ContentLength + PaddingLength == 0)
+                endOfRecord = offset + 7;
+            else if (length > 8)
+                FeedBytes(data, offset + 8, length - 8, out endOfRecord);
+            else
+                endOfRecord = -1;
+        }
 	}
 }

@@ -15,9 +15,12 @@ namespace FastCgiNet
 			: base(RecordType.FCGIStderr, requestId)
 		{
 		}
+
+        // TODO: There is no way to create secondary storage stderr records through the API. It doesn't make a whole lot of sense to me why
+        // someone would need this yet.. think about it later
 		
 		internal StderrRecord (byte[] data, int offset, int length, out int endOfRecord)
-			: base(RecordType.FCGIStderr, data, offset, length, out endOfRecord)
+			: base(RecordType.FCGIStderr, null, data, offset, length, out endOfRecord)
 		{
 		}
 	}

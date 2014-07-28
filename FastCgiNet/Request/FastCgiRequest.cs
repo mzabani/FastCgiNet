@@ -82,13 +82,14 @@ namespace FastCgiNet.Requests
             Stdin.Dispose();
             Stdout.Dispose();
             Stderr.Dispose();
+            RecordFactory.Dispose();
         }
 
         protected bool BeginRequestReceived { get; private set; }
         protected bool EndRequestReceived { get; private set; }
         /// <summary>
         /// This method is called internally when data is received and fed to this Request. It basically sets this request's properties
-        /// or appends data to the streams. Override it and call the base method itself to implement your own logics and checking.
+        /// or appends data to the streams. Override it and call the base method itself to implement your own logic and checking.
         /// </summary>
         protected virtual void AddReceivedRecord(RecordBase rec)
         {
@@ -147,9 +148,33 @@ namespace FastCgiNet.Requests
 			return b.RequestId.Equals(this.RequestId);
 		}
 
+        /// <summary>
+        /// Initializes a FastCgi Request that stores all records' contents in memory.
+        /// </summary>
+        [Obsolete("Use the constructor that needs a RecordFactory")]
         public FastCgiRequest()
         {
             RecordFactory = new RecordFactory();
+            BeginRequestSent = false;
+            BeginRequestReceived = false;
+            EndRequestSent = false;
+            EndRequestReceived = false;
+        }
+
+        /// <summary>
+        /// Builds a FastCgi Request that uses the supplied <paramref name="recordFactory"/> to build the records
+        /// that represent the incoming data.
+        /// </summary>
+        /// <param name="recordFactory">
+        /// The factory used to create records. This object's life cycle is controlled by this request.
+        /// That means that when this request is disposed, so will this record factory be.
+        /// </param>
+        public FastCgiRequest(RecordFactory recordFactory)
+        {
+            if (recordFactory == null)
+                throw new ArgumentNullException("recordFactory");
+
+            RecordFactory = recordFactory;
             BeginRequestSent = false;
             BeginRequestReceived = false;
             EndRequestSent = false;

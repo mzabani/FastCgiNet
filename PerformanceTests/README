@@ -1,0 +1,2 @@
+- You need to have Mono installed to run these performance tests. Look into the makefile for the targets
+  that have '_exec' in their name to run the performance tests.

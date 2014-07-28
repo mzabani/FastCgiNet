@@ -147,6 +147,9 @@ namespace FastCgiNet.Requests
             base.Dispose();
         }
 
+        /// <summary>
+        /// Initializes a FastCgi Request over a socket that represents the point of view of the webserver (not of the application).
+        /// </summary>
         public WebServerSocketRequest(Socket s, ushort requestId)
             : base(s)
 		{

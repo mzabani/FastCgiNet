@@ -10,8 +10,10 @@ namespace FastCgiNet
 		private Stream Contents;
 		private int bufsize;
 		private byte[] buf;
+        private byte[] bufSmall;
 		private int unusedBytes;
 		private NameValuePair lastIncompleteNvp;
+        private int lastIncompleteNvpBytesFed;
 		private long ContentLength;
 		private long NvpBytesYielded;
 
@@ -23,6 +25,28 @@ namespace FastCgiNet
 
 		public bool MoveNext()
 		{
+            /*
+            while (true)
+            {
+                // Know when to stop
+                if (NvpBytesYielded == ContentLength)
+                    return false;
+
+                int readBytes;
+
+                // If we have an incomplete nvp, keep feeding bytes to it
+                if (lastIncompleteNvp != null)
+                {
+                    while ((readBytes = Contents.Read(bufSmall, unusedBytes, bufSmall.Length - unusedBytes)) > 0)
+                    {
+                        lastIncompleteNvp.FeedBytes(bufSmall, 0, 
+                    }
+                }
+
+                readBytes = Contents.Read(bufSmall, unusedBytes, bufSmall.Length - unusedBytes);
+
+            }*/
+
             //TODO: Improve this implementation. Specifically, don't shift the buffer left every time. Keep a smaller buffer
             // that is big enough to create a Nvp and use it like RecordFactory does
 			int readBytes;
@@ -120,8 +144,9 @@ namespace FastCgiNet
 			ContentLength = contentLength;
 			NvpBytesYielded = 0;
 
-			bufsize = 128;
+			bufsize = 16;
 			buf = new byte[bufsize];
+            bufSmall = new byte[8];
 		}
 	}
 }

@@ -63,6 +63,8 @@
     <Compile Include="Records\RecordFactory.cs" />
     <Compile Include="Records\AbortRequestRecord.cs" />
     <Compile Include="Records\DataRecord.cs" />
+    <Compile Include="Streams\ISecondaryStorageOps.cs" />
+    <Compile Include="Streams\TmpFileSecondaryStorageOps.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

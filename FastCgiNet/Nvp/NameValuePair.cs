@@ -17,13 +17,6 @@ namespace FastCgiNet
 			get
 			{
                 return System.Text.ASCIIEncoding.ASCII.GetString(nameBytes);
-
-//                //TODO: Use ASCIIEncoding
-//				var x = new StringBuilder(NameLength);
-//				foreach (byte b in nameBytes)
-//					x.Append((char)b);
-//
-//				return x.ToString();
 			}
 		}
 		public string Value
@@ -31,15 +24,6 @@ namespace FastCgiNet
 			get
 			{
                 return System.Text.ASCIIEncoding.ASCII.GetString(valueBytes);
-
-//                //TODO: Use ASCIIEncoding
-//				var x = new StringBuilder(ValueLength);
-//				foreach (byte b in valueBytes)
-//				{
-//					x.Append((char)b);
-//				}
-//				
-//				return x.ToString();
 			}
 		}
 
@@ -60,7 +44,6 @@ namespace FastCgiNet
 				headerBytes[2] = (byte) (length & 0xff0000);
 				headerBytes[1] = (byte) (length & 0xff00);
 				headerBytes[0] = (byte) (length & 0xff);
-				//headerBytes[0] |= (1<<7);
 			}
 
 			return headerBytes;

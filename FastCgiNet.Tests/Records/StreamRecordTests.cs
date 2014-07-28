@@ -56,7 +56,7 @@ namespace FastCgiNet.Tests
 
 				int endOfRecord;
 
-				using (var receivedRecord = (StdinRecord)RecordFactory.CreateRecordFromHeader(recordHeader.Array, recordHeader.Offset, recordHeader.Count, out endOfRecord))
+				using (var receivedRecord = (StdinRecord)RecordFactory.CreateRecordFromHeader(recordHeader.Array, null, recordHeader.Offset, recordHeader.Count, out endOfRecord))
 				{
 					int i = 1;
 					while (endOfRecord == -1)

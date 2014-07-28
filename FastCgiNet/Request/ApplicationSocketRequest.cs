@@ -136,17 +136,38 @@ namespace FastCgiNet.Requests
             base.Dispose();
         }
 
-		#region Constructors
+        /// <summary>
+        /// Initializes a FastCgi Request over a socket that represents the point of view of the application (not of the webserver).
+        /// All received records' contents' are stored in memory.
+        /// </summary>
+        [Obsolete("Use the constructor that needs a RecordFactory")]
 		public ApplicationSocketRequest(Socket s)
             : base(s)
 		{
 		}
 
+        /// <summary>
+        /// Initializes a FastCgi Request over a socket that represents the point of view of the application (not of the webserver).
+        /// All received records' contents' are stored in memory.
+        /// </summary>
+        [Obsolete("Use the constructor that needs a RecordFactory")]
 		public ApplicationSocketRequest(Socket s, BeginRequestRecord beginRequestRecord)
 			: this(s)
 		{
 			AddReceivedRecord(beginRequestRecord);
  		}
-		#endregion
+
+        /// <summary>
+        /// Initializes a FastCgi Request over a socket that represents the point of view of the application (not of the webserver).
+        /// The supplied <paramref name="recordFactory"/> is used to build the records that represent the incoming data.
+        /// </summary>
+        /// <param name="recordFactory">
+        /// The factory used to create records. This object's life cycle is controlled by this request.
+        /// That means that when this request is disposed, so will this record factory be.
+        /// </param>
+        public ApplicationSocketRequest(Socket s, RecordFactory recordFactory)
+            : base(s, recordFactory)
+        {
+        }
 	}
 }

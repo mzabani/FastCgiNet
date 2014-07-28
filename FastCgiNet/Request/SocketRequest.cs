@@ -43,12 +43,34 @@ namespace FastCgiNet.Requests
             }
 		}
 
+        /// <summary>
+        /// Initializes a FastCgi Request whose communication medium is a socket. All records' contents are stored in memory.
+        /// </summary>
+        [Obsolete("Use the constructor that needs a RecordFactory")]
 		public SocketRequest(Socket s)
+            : base()
 		{
 			if (s == null)
 				throw new ArgumentNullException("s");
 			
 			this.Socket = s;
 		}
+
+        /// <summary>
+        /// Builds a FastCgi Request whose communication medium is a socket.
+        /// The supplied <paramref name="recordFactory"/> is used to build the records that represent the incoming data.
+        /// </summary>
+        /// <param name="recordFactory">
+        /// The factory used to create records. This object's life cycle is controlled by this request.
+        /// That means that when this request is disposed, so will this record factory be.
+        /// </param>
+        public SocketRequest(Socket s, RecordFactory recordFactory)
+            : base(recordFactory)
+        {
+            if (s == null)
+                throw new ArgumentNullException("s");
+            
+            this.Socket = s;
+        }
 	}
 }

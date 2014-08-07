@@ -22,7 +22,7 @@ namespace FastCgiNet.Tests
     				var bytes = paramsRec.GetBytes().ToList();
     				var header = bytes[0];
     				int endOfRecord;
-    				using (var receivedRec = (ParamsRecord)RecordFactory.CreateRecordFromHeader(header.Array, null, header.Offset, header.Count, out endOfRecord))
+    				using (var receivedRec = (ParamsRecord)RecordFactory.CreateRecordFromHeader(header.Array, header.Offset, header.Count, out endOfRecord))
     				{
     					Assert.AreEqual(paramsRec.ContentLength, receivedRec.ContentLength);
     					for (int i = 1; i < bytes.Count; ++i)
@@ -57,7 +57,7 @@ namespace FastCgiNet.Tests
 				var bytes = paramsRec.GetBytes().ToList();
 				var header = bytes[0];
 				int endOfRecord;
-				using (var receivedRec = (ParamsRecord)RecordFactory.CreateRecordFromHeader(header.Array, null, header.Offset, header.Count, out endOfRecord))
+				using (var receivedRec = (ParamsRecord)RecordFactory.CreateRecordFromHeader(header.Array, header.Offset, header.Count, out endOfRecord))
 				{
 					Assert.AreEqual(paramsRec.ContentLength, receivedRec.ContentLength);
 					for (int i = 1; i < bytes.Count; ++i)
@@ -100,19 +100,6 @@ namespace FastCgiNet.Tests
 		}
 	
 		[Test]
-		public void TryToCreateRecordWithLessThanHeaderBytes()
-		{
-			Assert.Throws<ArgumentException>(() => {
-				byte[] data = new byte[7];
-				int endOfRecord;
-
-				using (var rec = new StdoutRecord(data, 0, data.Length, out endOfRecord))
-				{
-				}
-			});
-		}
-
-		[Test]
 		public void ReceiveEmptyRecord()
 		{
 			using (var rec = new StdinRecord(1))
@@ -124,7 +111,7 @@ namespace FastCgiNet.Tests
 
 				int endOfRecord;
 
-				using (var receivedRecord = (StdinRecord)RecordFactory.CreateRecordFromHeader(recordHeader.Array, null, recordHeader.Offset, recordHeader.Count, out endOfRecord))
+				using (var receivedRecord = (StdinRecord)RecordFactory.CreateRecordFromHeader(recordHeader.Array, recordHeader.Offset, recordHeader.Count, out endOfRecord))
 				{
 					int i = 1;
 					while (endOfRecord == -1)

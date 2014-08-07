@@ -20,7 +20,7 @@ namespace FastCgiNet
         // someone would need this yet.. think about it later
 		
 		internal StderrRecord (byte[] data, int offset, int length, out int endOfRecord)
-			: base(RecordType.FCGIStderr, null, data, offset, length, out endOfRecord)
+			: base(RecordType.FCGIStderr, data, offset, length, out endOfRecord)
 		{
 		}
 	}

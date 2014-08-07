@@ -56,7 +56,7 @@ namespace FastCgiNet.Tests
 
 				int endOfRecord;
 
-				using (var receivedRecord = (StdinRecord)RecordFactory.CreateRecordFromHeader(recordHeader.Array, null, recordHeader.Offset, recordHeader.Count, out endOfRecord))
+				using (var receivedRecord = (StdinRecord)RecordFactory.CreateRecordFromHeader(recordHeader.Array, recordHeader.Offset, recordHeader.Count, out endOfRecord))
 				{
 					int i = 1;
 					while (endOfRecord == -1)
@@ -72,5 +72,28 @@ namespace FastCgiNet.Tests
 				}
 			}
 		}
+
+        [Test]
+        public void RecordsContentsInSecondaryStorage()
+        {
+            // All the record's contents must be written to the secondary storage ops object
+            StdinRecord rec;
+            using (var secondaryStorageStream = new MemoryStream())
+            {
+                rec = new StdinRecord(1, secondaryStorageStream);
+
+                rec.Contents.WriteByte(1);
+                rec.Contents.WriteByte(2);
+                rec.Contents.WriteByte(3);
+                rec.Contents.WriteByte(4);
+
+                byte[] recordsContents = new byte[4];
+                secondaryStorageStream.Position = 0;
+                secondaryStorageStream.Read(recordsContents, 0, 4);
+                for (int i = 1; i <= 4; i++) {
+                    Assert.AreEqual((byte) i, recordsContents[i - 1]);
+                }
+            }
+        }
 	}
 }

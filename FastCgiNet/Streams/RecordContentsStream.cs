@@ -6,8 +6,8 @@ using System.Collections.Generic;
 namespace FastCgiNet.Streams
 {
 	/// <summary>
-	/// Use this Stream whenever you have to work with a record's contents. This stream is specially designed
-	/// to be optimal for socket operations (avoids unnecessary buffering) and to check for invalid operations when it comes to FastCgi records.
+	/// A stream that represents a single record's contents. When in memory, this stream is implemented in a way that avoids
+    /// unnecessary byte copying for socket operations. It also checks for invalid operations when it comes to FastCgi records.
 	/// </summary>
 	public class RecordContentsStream : Stream
 	{
@@ -17,12 +17,23 @@ namespace FastCgiNet.Streams
 		private long position;
 
         /// <summary>
-        /// The position of the first byte of this stream in the stream returned by the supplied implementation of <see cref="ISecondaryStorageOps"/>.
+        /// The position of the first byte of this stream in the supplied stream.
         /// </summary>
         private long secondaryStoragePosition;
-        private ISecondaryStorageOps secondaryStorageOps;
+        private Stream secondaryStorageStream;
+        /// <summary>
+        /// Indicates whether the contents of this stream are stored in secondary storage.
+        /// </summary>
+        public bool InSecondaryStorage
+        {
+            get
+            {
+                return secondaryStorageStream != null;
+            }
+        }
 		/// <summary>
 		/// If not stored in secondary storage, this list represents all the the data that has been written to this stream.
+        /// When using secondary storage, this is <c>null</c>.
 		/// </summary>
 		internal LinkedList<byte[]> MemoryBlocks;
 		private int length;
@@ -55,9 +66,9 @@ namespace FastCgiNet.Streams
 				return 0;
 
             // 1. If we are reading from secondary storage, it is quite straight forward
-            if (secondaryStorageOps != null)
+            if (secondaryStorageStream != null)
             {
-                var dataStream = secondaryStorageOps.ReadData();
+                var dataStream = secondaryStorageStream;
                 dataStream.Seek(secondaryStoragePosition + position, SeekOrigin.Begin);
                 return dataStream.Read(buffer, offset, count);
             }
@@ -120,15 +131,14 @@ namespace FastCgiNet.Streams
 				throw new NotImplementedException("At the moment, only writing at the end of the stream is supported");
 
             // 1. Secondary storage
-            if (secondaryStorageOps != null)
+            if (secondaryStorageStream != null)
             {
-                var dataStream = secondaryStorageOps.ReadData();
+                var dataStream = secondaryStorageStream;
                 dataStream.Write(buffer, offset, count);
-                return;
             }
+            // 2. In memory storage
             else
             {
-                // 2. In memory storage
                 var internalBuffer = new byte[count];
                 Array.Copy(buffer, offset, internalBuffer, 0, count);
                 MemoryBlocks.AddLast(internalBuffer);
@@ -230,22 +240,31 @@ namespace FastCgiNet.Streams
 		public RecordContentsStream()
 		{
 			MemoryBlocks = new LinkedList<byte[]>();
-            secondaryStorageOps = null;
+            secondaryStorageStream = null;
 			length = 0;
 			position = 0;
 		}
 
         /// <summary>
-        /// Creates a stream that stores one record's contents in secondary storage. The life-cycle of the supplied
-        /// <see cref="ISecondaryStorageOps"/> has no relation with this stream whatsoever.
+        /// Creates a single record's stream that stores its contents in the supplied stream, <paramref name="secondaryStorageStream"/>.
+        /// The supplied stream will be written to from its current position, and this newly created <see cref="RecordContentsStream"/> will
+        /// mark this initial position internally to be able to find its contents. The life cycle of the supplied stream is not
+        /// related to this class, i.e. the supplied stream will not be disposed of when this object is disposed.
+        /// Typical usage of this constructor is when you want to store a request's contents in secondary storage. In fact, it is assumed
+        /// that when using this constructor you are storing this stream's contents in secondary storage
         /// </summary>
-        public RecordContentsStream(ISecondaryStorageOps secondaryStorageOps)
+        /// <param name="secondaryStorageStream">
+        /// A stream that will hold this and possibly other records' contents in secondary storage.
+        /// </param>
+        public RecordContentsStream(Stream secondaryStorageStream)
         {
-            if (secondaryStorageOps == null)
-                throw new ArgumentNullException("secondaryStorageOps");
+            if (secondaryStorageStream == null)
+                throw new ArgumentNullException("secondaryStorageStream");
+            if (!secondaryStorageStream.CanSeek)
+                throw new ArgumentException("The supplied secondary storage stream must be seekable");
 
-            this.secondaryStorageOps = secondaryStorageOps;
-            secondaryStoragePosition = secondaryStorageOps.ReadData().Position;
+            this.secondaryStorageStream = secondaryStorageStream;
+            secondaryStoragePosition = secondaryStorageStream.Position;
             length = 0;
             position = 0;
         }

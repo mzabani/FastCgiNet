@@ -18,7 +18,7 @@ namespace FastCgiNet
 			{
 				return base.Contents;
 			}
-			set
+			internal set
 			{
 				base.Contents = value;
 			}
@@ -33,7 +33,7 @@ namespace FastCgiNet
         // someone would need this yet.. think about it later
 
 		internal ParamsRecord(byte[] data, int offset, int length, out int endOfRecord)
-			: base(RecordType.FCGIParams, null, data, offset, length, out endOfRecord)
+			: base(RecordType.FCGIParams, data, offset, length, out endOfRecord)
 		{
 		}
 	}

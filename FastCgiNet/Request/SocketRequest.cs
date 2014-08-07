@@ -44,16 +44,12 @@ namespace FastCgiNet.Requests
 		}
 
         /// <summary>
-        /// Initializes a FastCgi Request whose communication medium is a socket. All records' contents are stored in memory.
+        /// Initializes a FastCgi Request whose communication medium is a socket. All records' contents are stored in memory up to 2kB. All other
+        /// data is stored in secondary storage.
         /// </summary>
-        [Obsolete("Use the constructor that needs a RecordFactory")]
 		public SocketRequest(Socket s)
-            : base()
+            : this(s, new RecordFactory())
 		{
-			if (s == null)
-				throw new ArgumentNullException("s");
-			
-			this.Socket = s;
 		}
 
         /// <summary>

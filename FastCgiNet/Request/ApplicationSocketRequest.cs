@@ -89,7 +89,7 @@ namespace FastCgiNet.Requests
             var beginRec = rec as BeginRequestRecord;
             if (beginRec != null)
             {
-                Role  = beginRec.Role;
+                Role = beginRec.Role;
                 ApplicationMustCloseConnection = beginRec.ApplicationMustCloseConnection;
             }
         }
@@ -138,9 +138,8 @@ namespace FastCgiNet.Requests
 
         /// <summary>
         /// Initializes a FastCgi Request over a socket that represents the point of view of the application (not of the webserver).
-        /// All received records' contents' are stored in memory.
+        /// All received records' contents' are stored in memory up to 2kB of data, all data that exceeds this limit is stored in secondary storage.
         /// </summary>
-        [Obsolete("Use the constructor that needs a RecordFactory")]
 		public ApplicationSocketRequest(Socket s)
             : base(s)
 		{
@@ -148,9 +147,8 @@ namespace FastCgiNet.Requests
 
         /// <summary>
         /// Initializes a FastCgi Request over a socket that represents the point of view of the application (not of the webserver).
-        /// All received records' contents' are stored in memory.
+        /// All received records' contents' are stored in memory up to 2kB of data, all data that exceeds this limit is stored in secondary storage.
         /// </summary>
-        [Obsolete("Use the constructor that needs a RecordFactory")]
 		public ApplicationSocketRequest(Socket s, BeginRequestRecord beginRequestRecord)
 			: this(s)
 		{

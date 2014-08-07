@@ -17,7 +17,7 @@ namespace FastCgiNet.Tests
 				// rec is just an empty record
 				var header = rec.GetBytes().First();
 				int endOfRecord;
-				using (var emptyRec = new StdinRecord(header.Array, null, header.Offset, header.Count, out endOfRecord))
+				using (var emptyRec = new StdinRecord(header.Array, header.Offset, header.Count, out endOfRecord))
 				{
 					Assert.AreEqual(7, endOfRecord);
 				}
@@ -35,7 +35,7 @@ namespace FastCgiNet.Tests
 				var blocks = rec.GetBytes().ToList();
 				var header = blocks.First();
 				int endOfRecord;
-				using (var emptyRec = new StdinRecord(header.Array, null, header.Offset, header.Count, out endOfRecord))
+				using (var emptyRec = new StdinRecord(header.Array, header.Offset, header.Count, out endOfRecord))
 				{
 					Assert.AreEqual(-1, endOfRecord);
 					emptyRec.FeedBytes(blocks[1].Array, blocks[1].Offset, blocks[1].Count, out endOfRecord);

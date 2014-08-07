@@ -66,7 +66,7 @@ namespace FastCgiNet.Tests
                             if (!applicationSocket.Poll(MaxPollTime, SelectMode.SelectRead))
                                 throw new Exception("Data took too long");
 
-                            using (var applicationRequest = new ApplicationSocketRequest(applicationSocket))
+                            using (var applicationRequest = new ApplicationSocketRequest(applicationSocket, new RecordFactory(int.MaxValue)))
                             {
                                 int bytesRead;
                                 bool beginRequestReceived = false;

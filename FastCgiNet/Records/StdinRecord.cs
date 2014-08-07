@@ -23,13 +23,13 @@ namespace FastCgiNet
         /// which will calculate and set them for you.
         /// </summary>
         /// <param name="requestId">The RequestId of this record.</param>
-        public StdinRecord(ushort requestId, ISecondaryStorageOps secondaryStorageOps)
-            : base(RecordType.FCGIStdin, requestId, secondaryStorageOps)
+        public StdinRecord(ushort requestId, Stream secondaryStorageStream)
+            : base(RecordType.FCGIStdin, requestId, secondaryStorageStream)
         {
         }
 		
-        internal StdinRecord (byte[] data, ISecondaryStorageOps secondaryStorageOps, int offset, int length, out int endOfRecord)
-			: base(RecordType.FCGIStdin, secondaryStorageOps, data, offset, length, out endOfRecord)
+        internal StdinRecord (byte[] data, int offset, int length, out int endOfRecord)
+			: base(RecordType.FCGIStdin, data, offset, length, out endOfRecord)
 		{
 		}
 	}

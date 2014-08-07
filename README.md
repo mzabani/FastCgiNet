@@ -144,16 +144,29 @@ using (var listenSock = new Socket(AddressFamily.InterNetwork, SocketType.Stream
 
 Once again, don't forget to handle all sorts of socket and evil web server errors.
 
+Large requests and memory consumption (Application Side)
+--------------------------------------------------------
+If you're using the Requests API, you have an easy way to store large requests on disk instead of in memory. In fact, if you just copy and paste the application code example, *FastCgiNet* will automatically be storing requests larger than 2kB on disk for you. This size limit can easily be specified through a constructor in the ```RecordFactory``` class, which can be supplied to your ```FastCgiRequest```s (**note that this is not implemented in v0.1; it is only available on master and will be available in v0.11**).
+
+Large requests and memory consumption (Webserver side)
+------------------------------------------------------
+TODO
+
 The Records API
 --------------
 This is a lower level API that allows you to build Records and send them yourself. It is _highly_ recommended that you don't use this API, for a couple reasons:
 
 - A record holds at most 65535 bytes of content. This means that you have to break your data into several records to get it through, or things can go badly wrong.
 - There is no notion of a Request in this API. You have to deal with that on your own.
+- Large requests - imagine a file upload - are a huge waste of memory. The Requests API can automatically offset storage of records' contents to disk after a specified limit for you; it is not so easy (although it is available) to do this when handling records directly.
 - The Requests API makes several sanity checks that make it very helpful.
 
 This API is public because in conjunction with the Requests API, a power user might make good use of it (although I see very few use cases myself).
 As such, I will not take as much effort in documenting this API as I will take documenting the Requests API. The code is very well documented and intuitive, so if you need it, just explore the API and you'll probably be fine.
+
+Versioning
+----------
+This library is still undergoing slight API changes. The author tries very hard to maintain a very good level of backwards compatibility, although some behavior changes and even API changes can be expected until v0.2. After reaching v0.2, we will enter a strict versioning scheme, which will be well documented here.
 
 TODO
 ----

@@ -10,7 +10,7 @@ namespace FastCgiNet.Requests
 	/// </summary>
 	public abstract class FastCgiRequest : IDisposable
 	{
-		public ushort RequestId { get; protected set; }
+		public ushort RequestId { get; internal set; }
 
         /// <summary>
         /// This request's Record Factory.
@@ -149,9 +149,8 @@ namespace FastCgiNet.Requests
 		}
 
         /// <summary>
-        /// Initializes a FastCgi Request that stores all records' contents in memory.
+        /// Initializes a FastCgi Request that stores all records' contents in memory up to 2kB, then storing data on secondary storage.
         /// </summary>
-        [Obsolete("Use the constructor that needs a RecordFactory")]
         public FastCgiRequest()
         {
             RecordFactory = new RecordFactory();
